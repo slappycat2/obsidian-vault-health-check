@@ -1,4 +1,4 @@
-# Obsidian Vault Healthcheck (beta)
+# Obsidian Vault Health Check (beta)
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Z8Z71B3VAA)
 
 ![image](https://github.com/user-attachments/assets/cfd24288-3a92-4b89-9466-7e3010a599e5)
