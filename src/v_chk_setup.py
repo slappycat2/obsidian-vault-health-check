@@ -53,6 +53,9 @@ class SysConfig:
         self.bool_unused_2  = False
         self.bool_unused_3  = False
 
+        self.max_links_vals = 0  # Values Tab Maximum Links
+        self.max_links_tags = 0  # Tags Tab Maximum Links
+
         self.cfg = {}
 
         # NOTE: this is the SYSTEM config, not the wb runtime config
@@ -174,6 +177,8 @@ class SysConfig:
             , 'bool_unused_1':      self.bool_unused_1
             , 'bool_unused_2':      self.bool_unused_2
             , 'bool_unused_3':      self.bool_unused_3
+            , 'max_links_vals': self.max_links_vals
+            , 'max_links_tags': self.max_links_tags
         }
 
     def cfg_unpack(self):
@@ -201,6 +206,8 @@ class SysConfig:
         self.bool_unused_1      = self.cfg.get('bool_unused_1', True)
         self.bool_unused_2      = self.cfg.get('bool_unused_2', True)
         self.bool_unused_3      = self.cfg.get('bool_unused_3', True)
+        self.max_links_vals = self.cfg.get('max_links_vals', 0)
+        self.max_links_tags = self.cfg.get('max_links_tags', 0)
 
     def validate_vault_id(self, vault_id):
         """Validate Obsidian Vault ID"""
@@ -345,6 +352,13 @@ class SysConfig:
             self.bool_unused_2  = self.bool_unused_2_var.get()
             self.bool_unused_3  = self.bool_unused_3_var.get()
 
+            try:
+                self.max_links_vals = int(self.max_links_vals_var.get())
+                self.max_links_tags = int(self.max_links_tags_var.get())
+            except ValueError:
+                messagebox.showerror("Error", "Maximum links values must be valid numbers")
+                return
+
             if self.save_config():
                 #  messagebox.showinfo("Success", "Configuration saved successfully!")
                 self.root.quit()
@@ -462,7 +476,7 @@ class SysConfig:
         ttk.Checkbutton(options_frame, text="Show Notes", variable=self.bool_shw_notes_var).grid(
             row=0, column=0, sticky=tk.W, pady=5
         )
-        ttk.Checkbutton(options_frame, text="For Future Use-1", variable=self.bool_unused_1_var).grid(
+        ttk.Checkbutton(options_frame, text="For Future Use-1", variable=self.bool_unused_1_var, state='disabled').grid(
             row=0, column=1, sticky=tk.W, pady=5
         )
 
@@ -470,17 +484,62 @@ class SysConfig:
         ttk.Checkbutton(options_frame, text="Use Full Paths in Links", variable=self.bool_rel_paths_var).grid(
             row=1, column=0, sticky=tk.W, pady=5
         )
-        ttk.Checkbutton(options_frame, text="For Future Use-2", variable=self.bool_unused_2_var).grid(
+        ttk.Checkbutton(options_frame, text="For Future Use-2", variable=self.bool_unused_2_var, state='disabled').grid(
             row=1, column=1, sticky=tk.W, pady=5
         )
 
         # Third row of checkboxes
-        ttk.Checkbutton(options_frame, text="Show Rows in Summary", variable=self.bool_summ_rows_var).grid(
+        ttk.Checkbutton(options_frame, text="Show Rows in Summary", variable=self.bool_summ_rows_var, state='disabled').grid(
             row=2, column=0, sticky=tk.W, pady=5
         )
-        ttk.Checkbutton(options_frame, text="For Future Use-3", variable=self.bool_unused_3_var).grid(
+        ttk.Checkbutton(options_frame, text="For Future Use-3", variable=self.bool_unused_3_var, state='disabled').grid(
             row=2, column=1, sticky=tk.W, pady=5
         )
+
+        row += 1
+
+        # Displayed Links Maximums section
+        ttk.Label(main_frame, text="Displayed Links Maximums:", font=("TkDefaultFont", 10, "bold")).grid(
+            row=row, column=0, columnspan=2, sticky=tk.W, pady=(20, 10)
+        )
+
+        row += 1
+        links_frame = ttk.Frame(main_frame)
+        links_frame.grid(row=row, column=0, columnspan=2, sticky=(tk.W, tk.E), padx=(0, 0))
+        links_frame.columnconfigure(1, weight=1)
+        links_frame.columnconfigure(3, weight=1)
+
+        # Values Tab Maximum Links
+        ttk.Label(links_frame, text="Values Tab Maximum Links:").grid(row=0, column=0, sticky=tk.W, pady=5, padx=(0, 10))
+        self.max_links_vals_var = tk.StringVar(value=str(self.max_links_vals))
+        vals_spinbox = ttk.Spinbox(links_frame, from_=0, to=16300, textvariable=self.max_links_vals_var, width=10)
+        vals_spinbox.grid(row=0, column=1, sticky=tk.W, pady=5)
+        self.max_links_vals_label = ttk.Label(links_frame, text="Unlimited" if self.max_links_vals == 0 else str(self.max_links_vals))
+        self.max_links_vals_label.grid(row=0, column=2, sticky=tk.W, pady=5, padx=10)
+
+        # Tags Tab Maximum Links
+        ttk.Label(links_frame, text="Tags Tab Maximum Links:").grid(row=1, column=0, sticky=tk.W, pady=5, padx=(0, 10))
+        self.max_links_tags_var = tk.StringVar(value=str(self.max_links_tags))
+        tags_spinbox = ttk.Spinbox(links_frame, from_=0, to=16300, textvariable=self.max_links_tags_var, width=10)
+        tags_spinbox.grid(row=1, column=1, sticky=tk.W, pady=5)
+        self.max_links_tags_label = ttk.Label(links_frame, text="Unlimited" if self.max_links_tags == 0 else str(self.max_links_tags))
+        self.max_links_tags_label.grid(row=1, column=2, sticky=tk.W, pady=5, padx=10)
+
+        def update_links_label(*args):
+            try:
+                vals = int(self.max_links_vals_var.get())
+                self.max_links_vals_label.config(text="Unlimited" if vals == 0 else str(vals))
+            except ValueError:
+                self.max_links_vals_label.config(text="Invalid")
+
+            try:
+                tags = int(self.max_links_tags_var.get())
+                self.max_links_tags_label.config(text="Unlimited" if tags == 0 else str(tags))
+            except ValueError:
+                self.max_links_tags_label.config(text="Invalid")
+
+        self.max_links_vals_var.trace('w', update_links_label)
+        self.max_links_tags_var.trace('w', update_links_label)
 
         row += 1
 
