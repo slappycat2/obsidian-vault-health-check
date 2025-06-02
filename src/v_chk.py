@@ -30,7 +30,7 @@ class VaultHealthCheck:   # WbConfig
         self.wb_def = self.wb_data_obj.wb_def
 
         self.cfg = self.wb_def.get('cfg', {})
-        self.tmpldir = Path(self.cfg.get('tmpldir', ''))
+        self.dir_templates = Path(self.cfg.get('dir_templates', ''))
         self.isTemplate = False
         self.wb_data = self.wb_def.get('wb_data', {})
         self.obs_props = self.wb_data.get('obs_props', {})
@@ -57,16 +57,16 @@ class VaultHealthCheck:   # WbConfig
         self.plugin_id = ""
         self.ctot = [0] * 10
 
-        plugin_lib = PluginMan(self.cfg['vault_path'])
+        plugin_lib = PluginMan(self.cfg['dir_vault'])
         self.obs_plugs = plugin_lib.get_obs_plugs()
 
         self.process_vault()
 
     def process_vault(self):
         if self.DBUG_LVL >= 0:
-            print(f"Gathering statistics on vault Id: {self.cfg['vault_id']}  Path: {self.cfg['vault_path']}...")
+            print(f"Gathering statistics on vault Id: {self.cfg['vault_id']}  Path: {self.cfg['dir_vault']}...")
 
-        v_path_obj = Path(self.cfg['vault_path'])
+        v_path_obj = Path(self.cfg['dir_vault'])
         for md_file in v_path_obj.rglob("*.md"):
             self.ctot[0] += 1
 
@@ -76,25 +76,26 @@ class VaultHealthCheck:   # WbConfig
                 # print(f"dbug is on: Skipping_file: {md_file} is not equal to {self.dbug}")
                 continue
 
-            x_dir_test = False
-            for x_dir in md_file.parts:
-                if x_dir in self.cfg['dirs_skip_abs_lst']:
-                    x_dir_test = True
-                    continue  # this only exits this for loop
-            if x_dir_test:
-                self.ctot[1] += 1
-                print(f"Skipping file: {md_file} is in dirs_skip_abs_lst")
-                continue # this gets the next file...
-
             self.isTemplate = False
-            if self.is_subdirectory(md_file, self.tmpldir):
+            if self.is_subdirectory(md_file, self.dir_templates):
                 self.isTemplate = True
-                self.ctot[2] += 1
+                self.ctot[1] += 1
                 # right now, support for templates is not implemented.
                 # this will require a special decoding of the markdown
                 # without using PyYaml, since they would not load properly
                 # otherwise it will like all be invalid properties...
                 continue
+
+            x_dir_test = False
+            for x_dir in md_file.parts:
+                if x_dir in self.cfg['dirs_skip_rel_str']:
+                    x_dir_test = True
+                    continue  # this only exits this for loop
+            if x_dir_test:
+                self.ctot[2] += 1
+                print(f"Skipping file: {md_file} is in dirs_skip_rel_str")
+                continue # this gets the next file...
+
 
             md_pname = str(md_file)
 
@@ -117,7 +118,7 @@ class VaultHealthCheck:   # WbConfig
         self.wb_data_obj.write_bat_data()
 
         if self.DBUG_LVL > 0:
-            print(f"Vault ({self.cfg['vault_path']}) processing complete.")
+            print(f"Vault ({self.cfg['dir_vault']}) processing complete.")
 
         return
 
@@ -469,9 +470,9 @@ if __name__ == "__main__":
     exporter = ExcelExporter(DBUG_LVL)
     exporter.export(DBUG_LVL)
 
-        # print(f"v_chk_xl:Loading Spreadsheet: {wb_exec_path} - {xls_pname}")
+        # print(f"v_chk_xl:Loading Spreadsheet: {pn_wb_exec} - {pn_wbs}")
         # time.sleep(5)
-        # pid = Popen([wb_exec_path, xls_pname]).pid
+        # pid = Popen([pn_wb_exec, pn_wbs]).pid
 
         # shelve_file = shelve.open("v_def.db")
         # shelve_file['v_def'] = v_def
@@ -488,9 +489,9 @@ if __name__ == "__main__":
         print(f"\n{lin}")
         # self.tab_def['tab_cd_table_hdr']['Row']
         print(f"Vault Health Check Complete.")
-        print(f"\nConfig Sys File: {cfg['cfg_pname']}")
-        print(f"     Next Data File: {cfg['cfg_pname']}")
-        print(f"            Wb File: {cfg['xls_pname']}")
+        print(f"\nConfig Sys File: {cfg['pn_cfg']}")
+        print(f"     Next Data File: {cfg['pn_cfg']}")
+        print(f"            Wb File: {cfg['pn_wbs']}")
 
         # dump wb_def
         dict_list = {

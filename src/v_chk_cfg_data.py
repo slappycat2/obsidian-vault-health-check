@@ -13,8 +13,8 @@ class DataDefinition:
         self.cfg = SysConfig(self.DBUG_LVL).cfg
         self.sys_id = sys_id
         self.OPEN_ON_CREATE = True
-        self.xls_pname = ""     # assigned below
-        self.bat_pname = ""
+        self.pn_wbs = ""     # assigned below
+        self.pn_batch = ""
         self.bat_num = 0
 
         self.wb_data = {}     # NEED TO CHECK IF OK WITH v_chk
@@ -86,16 +86,16 @@ class DataDefinition:
             # no files in dir (latest file is empty)
             pass
         except Exception as e:
-            raise Exception(f"ConfigData: Error reading config file ({self.bat_pname}) Error : {e}")
+            raise Exception(f"ConfigData: Error reading config file ({self.pn_batch}) Error : {e}")
 
-        self.bat_pname = latest_file
-        self.xls_pname = f"{self.xls_dir}\\{Path(latest_file).stem}.xlsx"
+        self.pn_batch = latest_file
+        self.pn_wbs = f"{self.dir_wbs}\\{Path(latest_file).stem}.xlsx"
         if self.DBUG_LVL > 1:
-            print(f"ConfigData: Read Last Config file: {self.bat_pname}")
+            print(f"ConfigData: Read Last Config file: {self.pn_batch}")
         # Add these to the wb_def (not the sys file!)
-        self.cfg['cfg_pname'] = self.bat_pname
-        self.cfg['xls_pname'] = self.xls_pname
-        self.cfg['cfg_pname'] = self.cfg_pname
+        self.cfg['pn_cfg'] = self.pn_batch
+        self.cfg['pn_wbs'] = self.pn_wbs
+        self.cfg['pn_cfg'] = self.pn_cfg
 
         return
 
@@ -114,14 +114,14 @@ class DataDefinition:
             if self.DBUG_LVL > 1:
                 print(f"ConfigData: Next Config file: {c_file}")
 
-        self.bat_pname = c_file
-        self.xls_pname = f"{self.xls_dir}{Path(c_file).stem}.xlsx"
-        self.cfg['cfg_pname'] = self.bat_pname
-        self.cfg['xls_pname'] = self.xls_pname
+        self.pn_batch = c_file
+        self.pn_wbs = f"{self.dir_wbs}{Path(c_file).stem}.xlsx"
+        self.cfg['pn_cfg'] = self.pn_batch
+        self.cfg['pn_wbs'] = self.pn_wbs
         self.cfg['bat_num'] = self.bat_num
 
         if self.DBUG_LVL > 1:
-            print(f"ConfigData: Init Next Config file: {self.bat_pname}")
+            print(f"ConfigData: Init Next Config file: {self.pn_batch}")
 
         # Init everything except cfg, as this is a new file...
         self.tab_def = {}
@@ -169,13 +169,13 @@ class DataDefinition:
         return
 
     def write_cfg_data(self):
-        if not self.bat_pname:
+        if not self.pn_batch:
             self.get_next_cfg()
 
         # self.wb_def_pack()   # This clobbers wb_data during tags! Upd explicitly!
 
         try:
-            with open(self.bat_pname, 'w') as yaml_file:
+            with open(self.pn_batch, 'w') as yaml_file:
                 # yaml.dump(range(50), width=50, indent=4)
                 yaml.dump({
                     'wb_def':     self.wb_def
@@ -185,7 +185,7 @@ class DataDefinition:
             return
 
         except Exception as e:
-            print(f"ConfigData-write-wb_def ({self.bat_pname}): Error in Save Config: {e}")
+            print(f"ConfigData-write-wb_def ({self.pn_batch}): Error in Save Config: {e}")
             sys.exit(1)
 
 
@@ -199,22 +199,22 @@ class DataDefinition:
         # if op_flg is not None:
         #     op_flg = op_flg.upper()
 
-        if self.bat_pname == '' or self.cfg_pname is None:
+        if self.pn_batch == '' or self.pn_cfg is None:
             self.get_last_cfg()
             if self.DBUG_LVL > 1:
-                print(f"ConfigData-read_config: Loaded last config file: {self.bat_pname}")
+                print(f"ConfigData-read_config: Loaded last config file: {self.pn_batch}")
         else:
             if self.DBUG_LVL > 1:
-                print(f"ConfigData-read_config: Reading Config file: {self.bat_pname}")
+                print(f"ConfigData-read_config: Reading Config file: {self.pn_batch}")
         try:
-            with open(self.bat_pname, 'r') as file_y:
+            with open(self.pn_batch, 'r') as file_y:
                 cfg_data = file_y.read()
 
             wb_def_temp = yaml.safe_load(cfg_data)
             wb_def_temp = wb_def_temp.get('wb_def', {})
 
         except Exception as e:
-            raise Exception(f"ConfigData: Error reading config file ({self.bat_pname}) Error : {e}")
+            raise Exception(f"ConfigData: Error reading config file ({self.pn_batch}) Error : {e}")
 
         return wb_def_temp
 

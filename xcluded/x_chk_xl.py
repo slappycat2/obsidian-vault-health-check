@@ -101,9 +101,9 @@ class ExcelExporter:
         cfg = cfg.read_config(cfg)
 
         if self.DBUG_LVL > 8:
-            print(f"ExcelExport - cfg.wb_exec_path: {cfg.wb_exec_path}")
+            print(f"ExcelExport - cfg.pn_wb_exec: {cfg.pn_wb_exec}")
 
-        self.exl_file = Path(cfg.wb_exec_path)
+        self.exl_file = Path(cfg.pn_wb_exec)
 
     def initialize_all_tabs(self, wb, tab_list):
         for tab_id in self.tab_seq:
@@ -133,7 +133,7 @@ class ExcelExporter:
     def export(self, cfg):
     # =================================================================================
         if self.DBUG_LVL > 1:
-            print(f"ExcelExport.export - cfg.wb_exec_path: {cfg.wb_exec_path}")
+            print(f"ExcelExport.export - cfg.pn_wb_exec: {cfg.pn_wb_exec}")
 
         # Create the workbook instance
         wb = openpyxl.Workbook()
@@ -158,20 +158,20 @@ class ExcelExporter:
 
     def save_workbook(self, cfg, wb):
         if self.DBUG_LVL > 8:
-            print(f"Saving Spreadsheet: {cfg.v_chk_xls_pname}")
+            print(f"Saving Spreadsheet: {cfg.v_chk_pn_wbs}")
 
         # save and load workbook
-        if os.path.isfile(cfg.v_chk_xls_pname):
+        if os.path.isfile(cfg.v_chk_pn_wbs):
             user_fixed = 'n'
             w_time = 2 # secs
             retry_max = 2
             retry_count = 0
             while user_fixed.lower() in ["y", "n"]:
                 try:
-                    os.remove(cfg.v_chk_xls_pname)
+                    os.remove(cfg.v_chk_pn_wbs)
                     user_fixed = ''
                 except PermissionError:
-                    print(f"File {cfg.v_chk_xls_pname} must be closed. Trying again in {w_time} second...")
+                    print(f"File {cfg.v_chk_pn_wbs} must be closed. Trying again in {w_time} second...")
                     time.sleep(w_time)
                     if user_fixed.lower() not in ["y", "n"]:
                         if retry_count < retry_max:
@@ -179,22 +179,22 @@ class ExcelExporter:
                             retry_count += 1
 
                         else:
-                            print(f"File {cfg.v_chk_xls_pname} must be closed. Max Retries {retry_max} exceed. Exiting...")
+                            print(f"File {cfg.v_chk_pn_wbs} must be closed. Max Retries {retry_max} exceed. Exiting...")
                             sys.exit(1)
 
                 except Exception as e:
-                    print(f"Error removing file {cfg.v_chk_xls_pname}: {e}")
+                    print(f"Error removing file {cfg.v_chk_pn_wbs}: {e}")
                     user_fixed = input(f"Try again? (Y/n): ")
                     if user_fixed.lower() not in ["y", "n"]:
                         user_fixed = 'y'
 
-        wb.save(cfg.v_chk_xls_pname)
+        wb.save(cfg.v_chk_pn_wbs)
 
         if self.OPEN_ON_CREATE:
             self.load_spreadsheet(cfg)
 
     def load_spreadsheet(self, cfg):
-        pid = Popen([cfg.wb_exec_path, cfg.v_chk_xls_pname]).pid
+        pid = Popen([cfg.pn_wb_exec, cfg.v_chk_pn_wbs]).pid
         return pid
 
     def export_cell(self, cfg, tab, col_def_list, val, row_idx):
@@ -1250,7 +1250,7 @@ class ExcelExporter:
         cell.font = Font(name='Berlin Sans FB', size=11, bold=True)
 #       cell = summary_tab.cell(row=4, column=5, value=f"{cfg.c_date}")
         cell.font = Font(size=11, bold=True)
-        cell = summary_tab.cell(row=5, column=5, value=f"{cfg.v_chk_cfg_pname}")
+        cell = summary_tab.cell(row=5, column=5, value=f"{cfg.v_chk_pn_cfg}")
         cell.font = Font(size=11, bold=True)
         cell = summary_tab.cell(row=6, column=5, value=f"{cfg.bat_num:04d}")
         cell.font = Font(size=11, bold=True)
@@ -1333,7 +1333,7 @@ class ExcelExporter:
 
 
 if __name__ == "__main__":
-    # vault_path = "E:\o2"  # Change this to your vault path
+    # dir_vault = "E:\o2"  # Change this to your vault path
     # output_file = "obsidian_metadata.xlsx"
 
     cfg = Config()
@@ -1342,14 +1342,14 @@ if __name__ == "__main__":
     # wb_cfg = Wb_Cfg()
 
     if cfg:
-        print(f"v_chk_xl: Using last saved config: {cfg.v_chk_xls_pname}")
+        print(f"v_chk_xl: Using last saved config: {cfg.v_chk_pn_wbs}")
         exporter = ExcelExporter(cfg)
         exporter.export(cfg)
 
-        print(f"v_chk_xl:Loading Spreadsheet: {cfg.wb_exec_path} - {cfg.v_chk_xls_pname}")
+        print(f"v_chk_xl:Loading Spreadsheet: {cfg.pn_wb_exec} - {cfg.v_chk_pn_wbs}")
         time.sleep(5)
 
-        # pid = Popen([cfg.wb_exec_path, cfg.v_chk_xls_pname]).pid
+        # pid = Popen([cfg.pn_wb_exec, cfg.v_chk_pn_wbs]).pid
     else:
-        print(f"v_chk_xl: Error reading config in main: {cfg.v_chk_xls_pname}")
+        print(f"v_chk_xl: Error reading config in main: {cfg.v_chk_pn_wbs}")
         print(f"v_chk_xl: Exiting...")

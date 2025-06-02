@@ -11,16 +11,16 @@ import json
 class SysConfig:
     def __init__(self, dbug_lvl=0):
         self.vault_id       = ""
-        self.vault_path     = ""
-        self.wb_exec_path   = ""
+        self.dir_vault     = ""
+        self.pn_wb_exec   = ""
         self.DBUG_LVL = dbug_lvl
         self.cfg_sys_id = 'v_chk'
         self.cfg_sys_ver = "0.7"
         # Instantiate default values, presumably overridden in read_cfg_sys
         self.c_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.sys_dir = f"{Path(__file__).parent.parent.absolute()}\\"
-        self.bat_dir = f"{self.sys_dir}data\\batch_files\\"
-        self.xls_dir = f"{self.sys_dir}data\\workbooks\\"
+        self.dir_batch = f"{self.sys_dir}data\\batch_files\\"
+        self.dir_wbs = f"{self.sys_dir}data\\workbooks\\"
         self.tab_seq = [ 'pros'   # ONLY USED FOR NEW INSTALL! This is defined in CONFIG.yaml
                        , 'vals'
                        , 'tags'
@@ -38,12 +38,12 @@ class SysConfig:
         self.dirs_dot       = []
         self.dirs_skip_rel_str    = ""
         self.dirs_skip_abs_lst      = []
-        self.tmpldir        = ""
+        self.dir_templates        = ""
         self.ctot           = [0] * 10
 
-        self.bat_pname = ""
-        self.xls_pname = ""
-        self.cfg_pname = ""
+        self.pn_batch = ""
+        self.pn_wbs = ""
+        self.pn_cfg = ""
         self.bat_num   = 0
         
         self.bool_shw_notes = True
@@ -57,16 +57,16 @@ class SysConfig:
 
         # NOTE: this is the SYSTEM config, not the wb runtime config
         pname = Path(self.sys_dir).joinpath(f"CONFIG.yaml")
-        self.cfg_pname = f"{pname}" # prefer a string, rather than the Path Object
+        self.pn_cfg = f"{pname}" # prefer a string, rather than the Path Object
 
-        # self.tmpldir = self.get_templates_dir()
+        # self.dir_templates = self.get_templates_dir()
 
         # make sure directories exist
         data_dir = f"{self.sys_dir}data"
-        self.mkdirs([data_dir, self.sys_dir, self.bat_dir])
+        self.mkdirs([data_dir, self.sys_dir, self.dir_batch])
 
         # Load existing config or create new one
-        if os.path.exists(self.cfg_pname):
+        if os.path.exists(self.pn_cfg):
             self.load_config()
 
             if not self.chk_fields_on_load():
@@ -79,9 +79,9 @@ class SysConfig:
     def chk_fields_on_load(self):
         """Check if fields are valid on load"""
         # vault_id_valid, vault_id_msg     = self.validate_vault_id(self.vault_id)
-        vault_path_valid, vault_path_msg = self.validate_vault_path(self.vault_path)
-        wb_exec_valid, wb_exec_msg       = self.validate_wb_exec_path(self.wb_exec_path)
-        return vault_path_valid and wb_exec_valid
+        dir_vault_valid, dir_vault_msg = self.validate_dir_vault(self.dir_vault)
+        wb_exec_valid, wb_exec_msg       = self.validate_pn_wb_exec(self.pn_wb_exec)
+        return dir_vault_valid and wb_exec_valid
 
     def mkdirs(self, path):
         if isinstance(path, list):
@@ -95,13 +95,13 @@ class SysConfig:
         os.makedirs(path)
 
     def get_templates_dir(self):
-        template_cfg_file = f"{self.vault_path}\\.obsidian\\plugins\\templater-obsidian\\data.json"
+        template_cfg_file = f"{self.dir_vault}\\.obsidian\\plugins\\templater-obsidian\\data.json"
         try:
             if os.path.isfile(template_cfg_file):
                 with open(template_cfg_file, 'r') as f:
                     template_cfg_json = f.read()
                 template_cfg = json.loads(template_cfg_json)
-                templates_path = Path(self.vault_path).joinpath(template_cfg['templates_folder'])
+                templates_path = Path(self.dir_vault).joinpath(template_cfg['templates_folder'])
                 return f"{templates_path}"
 
 
@@ -116,7 +116,7 @@ class SysConfig:
     def load_config(self):
         """Load configuration from YAML file"""
         try:
-            with open(self.cfg_pname, 'r') as file:
+            with open(self.pn_cfg, 'r') as file:
                 self.cfg = yaml.safe_load(file)
                 self.cfg_unpack()
 
@@ -128,7 +128,7 @@ class SysConfig:
         self.cfg_pack()
 
         try:
-            with open(self.cfg_pname, 'w') as file:
+            with open(self.pn_cfg, 'w') as file:
                 yaml.dump(self.cfg, file, default_flow_style=False)
             return True
         except Exception as e:
@@ -136,37 +136,37 @@ class SysConfig:
             return False
 
     def cfg_pack(self):
-        path = Path(self.tmpldir.strip())
-        if not path.exists() or not path.is_dir() or self.tmpldir == '':
-            self.tmpldir = self.get_templates_dir()
+        path = Path(self.dir_templates.strip())
+        if not path.exists() or not path.is_dir() or self.dir_templates == '':
+            self.dir_templates = self.get_templates_dir()
 
-        self.dirs_dot = [f.name for f in os.scandir(self.vault_path) if
-                         f.is_dir() and f.path.startswith(f"{self.vault_path}\\.")]
+        self.dirs_dot = [f.name for f in os.scandir(self.dir_vault) if
+                         f.is_dir() and f.path.startswith(f"{self.dir_vault}\\.")]
 
         dirs = [d.strip() for d in self.dirs_skip_rel_str.split(',') if d.strip()]
         self.dirs_skip_abs_lst = []
         for dir_name in dirs:
-            dname = Path(self.vault_path).joinpath(dir_name)
+            dname = Path(self.dir_vault).joinpath(dir_name)
             self.dirs_skip_abs_lst += [str(dname)]
 
         self.cfg = {
               'vault_id':           self.vault_id
-            , 'vault_path':         self.vault_path
-            , 'wb_exec_path':       self.wb_exec_path
+            , 'dir_vault':         self.dir_vault
+            , 'pn_wb_exec':       self.pn_wb_exec
             , 'cfg_sys_id':         self.cfg_sys_id
             , 'cfg_sys_ver':        self.cfg_sys_ver
             , 'c_date':             self.c_date
-            , 'bat_dir':            self.bat_dir
-            , 'xls_dir':            self.xls_dir
-            , 'tmpldir':            self.tmpldir
+            , 'dir_batch':            self.dir_batch
+            , 'dir_wbs':            self.dir_wbs
+            , 'dir_templates':            self.dir_templates
             , 'tab_seq':            self.tab_seq
             , 'ctot':               self.ctot
             , 'dirs_dot':           self.dirs_dot
             , 'dirs_skip_rel_str':  self.dirs_skip_rel_str
             , 'dirs_skip_abs_lst':  self.dirs_skip_abs_lst
-            , 'bat_pname':          self.bat_pname
-            , 'xls_pname':          self.xls_pname
-            , 'cfg_pname':          self.cfg_pname
+            , 'pn_batch':          self.pn_batch
+            , 'pn_wbs':          self.pn_wbs
+            , 'pn_cfg':          self.pn_cfg
             , 'bat_num':            self.bat_num
             , 'bool_shw_notes':     self.bool_shw_notes
             , 'bool_rel_paths':     self.bool_rel_paths
@@ -178,22 +178,22 @@ class SysConfig:
 
     def cfg_unpack(self):
         self.vault_id           = self.cfg.get('vault_id', '')
-        self.vault_path         = self.cfg.get('vault_path', '')
-        self.wb_exec_path       = self.cfg.get('wb_exec_path', '')
+        self.dir_vault         = self.cfg.get('dir_vault', '')
+        self.pn_wb_exec       = self.cfg.get('pn_wb_exec', '')
         self.cfg_sys_id         = self.cfg.get('cfg_sys_id', 'v_chk')
         self.cfg_sys_ver        = self.cfg.get('cfg_sys_ver', '0.7')
         self.c_date             = self.cfg.get('c_date', datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-        self.bat_dir            = self.cfg.get('bat_dir', f"{self.sys_dir}data\\batch_files\\")
-        self.xls_dir            = self.cfg.get('xls_dir', f"{self.sys_dir}data\\workbooks\\")
-        self.tmpldir            = self.cfg.get('tmpldir', self.get_templates_dir())
+        self.dir_batch            = self.cfg.get('dir_batch', f"{self.sys_dir}data\\batch_files\\")
+        self.dir_wbs            = self.cfg.get('dir_wbs', f"{self.sys_dir}data\\workbooks\\")
+        self.dir_templates            = self.cfg.get('dir_templates', self.get_templates_dir())
         self.tab_seq            = self.cfg.get('tab_seq', '')
         self.ctot               = self.cfg.get('ctot', '')
         self.dirs_dot           = self.cfg.get('dirs_dot', '')
         self.dirs_skip_rel_str  = self.cfg.get('dirs_skip_rel_str', '')
         self.dirs_skip_abs_lst  = self.cfg.get('dirs_skip_abs_lst', '')
-        self.bat_pname          = self.cfg.get('bat_pname', '')
-        self.xls_pname          = self.cfg.get('xls_pname', '')
-        self.cfg_pname          = self.cfg.get('cfg_pname', '')
+        self.pn_batch          = self.cfg.get('pn_batch', '')
+        self.pn_wbs          = self.cfg.get('pn_wbs', '')
+        self.pn_cfg          = self.cfg.get('pn_cfg', '')
         self.bat_num            = self.cfg.get('bat_num', 0)
         self.bool_shw_notes     = self.cfg.get('bool_shw_notes', True)
         self.bool_rel_paths     = self.cfg.get('bool_rel_paths', True)
@@ -213,12 +213,12 @@ class SysConfig:
 
         return True, ""
 
-    def validate_vault_path(self, vault_path):
+    def validate_dir_vault(self, dir_vault):
         """Validate Obsidian Vault File Path"""
-        if not vault_path or not vault_path.strip():
+        if not dir_vault or not dir_vault.strip():
             return False, "Vault path cannot be empty"
 
-        path = Path(vault_path.strip())
+        path = Path(dir_vault.strip())
         if not path.exists():
             return False, "Vault path does not exist"
 
@@ -227,16 +227,16 @@ class SysConfig:
 
         return True, ""
 
-    def validate_dirs_skip_rel_str(self, dirs_skip_rel_str, vault_path):
+    def validate_dirs_skip_rel_str(self, dirs_skip_rel_str, dir_vault):
         """Validate directories to ignore"""
         if not dirs_skip_rel_str or not dirs_skip_rel_str.strip():
             return True, ""  # Empty is valid
 
-        if not vault_path or not vault_path.strip():
+        if not dir_vault or not dir_vault.strip():
             return False, "Vault path must be set first"
 
-        vault_path_obj = Path(vault_path.strip())
-        if not vault_path_obj.exists():
+        dir_vault_obj = Path(dir_vault.strip())
+        if not dir_vault_obj.exists():
             return False, "Vault path must be valid first"
 
         dirs = [d.strip() for d in dirs_skip_rel_str.split(',') if d.strip()]
@@ -244,9 +244,9 @@ class SysConfig:
             return True, ""
 
         for dir_name in dirs:
-            # Check if directory exists anywhere under vault_path
+            # Check if directory exists anywhere under dir_vault
             found = False
-            for root, dirs_list, files in os.walk(vault_path_obj):
+            for root, dirs_list, files in os.walk(dir_vault_obj):
                 if dir_name in dirs_list:
                     found = True
                     break
@@ -256,12 +256,12 @@ class SysConfig:
 
         return True, ""
 
-    def validate_wb_exec_path(self, wb_exec_path):
+    def validate_pn_wb_exec(self, pn_wb_exec):
         """Validate spreadsheet executable path"""
-        if not wb_exec_path or not wb_exec_path.strip():
+        if not pn_wb_exec or not pn_wb_exec.strip():
             return False, "Executable path cannot be empty"
 
-        path = Path(wb_exec_path.strip())
+        path = Path(pn_wb_exec.strip())
         if not path.exists():
             return False, "Executable file does not exist"
 
@@ -274,37 +274,37 @@ class SysConfig:
 
         return True, ""
 
-    def browse_vault_path(self):
+    def browse_dir_vault(self):
         """Open directory browser for vault path"""
         folder_path = filedialog.askdirectory(
             title="Select Obsidian Vault Directory",
-            initialdir=self.vault_path if self.vault_path else "/"
+            initialdir=self.dir_vault if self.dir_vault else "/"
         )
         if folder_path:
-            self.vault_path_var.set(folder_path)
+            self.dir_vault_var.set(folder_path)
             self.validate_all_fields()
 
     def browse_exec_path(self):
         """Open file browser for executable path"""
         file_path = filedialog.askopenfilename(
             title="Select Spreadsheet Executable",
-            initialdir=os.path.dirname(self.wb_exec_path) if self.wb_exec_path else "/",
+            initialdir=os.path.dirname(self.pn_wb_exec) if self.pn_wb_exec else "/",
             filetypes=[
                 ("Executable files", "*.exe" if platform.system() == "Windows" else "*"),
                 ("All files", "*.*")
             ]
         )
         if file_path:
-            self.wb_exec_path_var.set(file_path)
+            self.pn_wb_exec_var.set(file_path)
             self.validate_all_fields()
 
     def validate_all_fields(self):
         """Validate all fields and update save button state"""
         # vault_id_valid, vault_id_msg = self.validate_vault_id(self.vault_id_var.get())
-        vault_path_valid, vault_path_msg = self.validate_vault_path(self.vault_path_var.get())
-        wb_exec_valid, wb_exec_msg = self.validate_wb_exec_path(self.wb_exec_path_var.get())
+        dir_vault_valid, dir_vault_msg = self.validate_dir_vault(self.dir_vault_var.get())
+        wb_exec_valid, wb_exec_msg = self.validate_pn_wb_exec(self.pn_wb_exec_var.get())
         dirs_skip_rel_str_valid, dirs_skip_rel_str_msg = self.validate_dirs_skip_rel_str(
-            self.dirs_skip_rel_str_var.get(), self.vault_path_var.get()
+            self.dirs_skip_rel_str_var.get(), self.dir_vault_var.get()
         )
 
         # Update status labels
@@ -312,9 +312,9 @@ class SysConfig:
         #     text=vault_id_msg if not vault_id_valid else "✓ Valid",
         #     foreground="red" if not vault_id_valid else "green"
         # )
-        self.vault_path_status.config(
-            text=vault_path_msg if not vault_path_valid else "✓ Valid",
-            foreground="red" if not vault_path_valid else "green"
+        self.dir_vault_status.config(
+            text=dir_vault_msg if not dir_vault_valid else "✓ Valid",
+            foreground="red" if not dir_vault_valid else "green"
         )
         self.wb_exec_status.config(
             text=wb_exec_msg if not wb_exec_valid else "✓ Valid",
@@ -326,7 +326,7 @@ class SysConfig:
         )
 
         # Enable/disable save button
-        all_valid = vault_path_valid and wb_exec_valid and dirs_skip_rel_str_valid
+        all_valid = dir_vault_valid and wb_exec_valid and dirs_skip_rel_str_valid
         self.save_button.config(state="normal" if all_valid else "disabled")
 
         return all_valid
@@ -335,8 +335,8 @@ class SysConfig:
         """Handle Save & Run button click"""
         if self.validate_all_fields():
             # self.vault_id = self.vault_id_var.get().strip()
-            self.vault_path = self.vault_path_var.get().strip()
-            self.wb_exec_path = self.wb_exec_path_var.get().strip()
+            self.dir_vault = self.dir_vault_var.get().strip()
+            self.pn_wb_exec = self.pn_wb_exec_var.get().strip()
             self.dirs_skip_rel_str = self.dirs_skip_rel_str_var.get().strip()
             self.bool_shw_notes = self.bool_shw_notes_var.get()
             self.bool_rel_paths = self.bool_rel_paths_var.get()
@@ -388,8 +388,8 @@ class SysConfig:
         main_frame.columnconfigure(1, weight=1)
 
         # Create StringVar and BooleanVar objects for form fields
-        self.vault_path_var         = tk.StringVar(value=self.vault_path)
-        self.wb_exec_path_var       = tk.StringVar(value=self.wb_exec_path)
+        self.dir_vault_var         = tk.StringVar(value=self.dir_vault)
+        self.pn_wb_exec_var       = tk.StringVar(value=self.pn_wb_exec)
         self.dirs_skip_rel_str_var  = tk.StringVar(value=self.dirs_skip_rel_str)
         self.bool_shw_notes_var     = tk.BooleanVar(value=self.bool_shw_notes)
         self.bool_rel_paths_var     = tk.BooleanVar(value=self.bool_rel_paths)
@@ -402,17 +402,17 @@ class SysConfig:
 
         # Vault Path field
         ttk.Label(main_frame, text="Obsidian Vault Path:").grid(row=row, column=0, sticky=tk.W, pady=5)
-        vault_path_frame = ttk.Frame(main_frame)
-        vault_path_frame.grid(row=row, column=1, sticky=(tk.W, tk.E), pady=5, padx=(10, 0))
-        vault_path_frame.columnconfigure(0, weight=1)
+        dir_vault_frame = ttk.Frame(main_frame)
+        dir_vault_frame.grid(row=row, column=1, sticky=(tk.W, tk.E), pady=5, padx=(10, 0))
+        dir_vault_frame.columnconfigure(0, weight=1)
 
-        vault_path_entry = ttk.Entry(vault_path_frame, textvariable=self.vault_path_var)
-        vault_path_entry.grid(row=0, column=0, sticky=(tk.W, tk.E), padx=(0, 5))
-        ttk.Button(vault_path_frame, text="Browse", command=self.browse_vault_path).grid(row=0, column=1)
+        dir_vault_entry = ttk.Entry(dir_vault_frame, textvariable=self.dir_vault_var)
+        dir_vault_entry.grid(row=0, column=0, sticky=(tk.W, tk.E), padx=(0, 5))
+        ttk.Button(dir_vault_frame, text="Browse", command=self.browse_dir_vault).grid(row=0, column=1)
 
         row += 1
-        self.vault_path_status = ttk.Label(main_frame, text="", foreground="red")
-        self.vault_path_status.grid(row=row, column=1, sticky=tk.W, padx=(10, 0))
+        self.dir_vault_status = ttk.Label(main_frame, text="", foreground="red")
+        self.dir_vault_status.grid(row=row, column=1, sticky=tk.W, padx=(10, 0))
 
         row += 1
 
@@ -424,7 +424,7 @@ class SysConfig:
         wb_exec_frame.grid(row=row, column=1, sticky=(tk.W, tk.E), pady=(15, 5), padx=(10, 0))
         wb_exec_frame.columnconfigure(0, weight=1)
 
-        wb_exec_entry = ttk.Entry(wb_exec_frame, textvariable=self.wb_exec_path_var)
+        wb_exec_entry = ttk.Entry(wb_exec_frame, textvariable=self.pn_wb_exec_var)
         wb_exec_entry.grid(row=0, column=0, sticky=(tk.W, tk.E), padx=(0, 5))
         ttk.Button(wb_exec_frame, text="Browse", command=self.browse_exec_path).grid(row=0, column=1)
 
@@ -495,8 +495,8 @@ class SysConfig:
         cancel_button.pack(side=tk.LEFT)
 
         # Bind validation to field changes
-        self.vault_path_var.trace('w', lambda *args: self.validate_all_fields())
-        self.wb_exec_path_var.trace('w', lambda *args: self.validate_all_fields())
+        self.dir_vault_var.trace('w', lambda *args: self.validate_all_fields())
+        self.pn_wb_exec_var.trace('w', lambda *args: self.validate_all_fields())
         self.dirs_skip_rel_str_var.trace('w', lambda *args: self.validate_all_fields())
 
         # Initial validation
@@ -531,8 +531,8 @@ if __name__ == "__main__":
     # Access configuration data
     config = config_manager.get_config()
     # print("Current configuration:")
-    # print(f"Vault Path: {config['vault_path']}")
-    # print(f"Executable Path: {config['wb_exec_path']}")
+    # print(f"Vault Path: {config['dir_vault']}")
+    # print(f"Executable Path: {config['pn_wb_exec']}")
     # print(f"Ignore Directories: {config['dirs_skip_rel_str']}")
     # print(f"Show Notes: {config['show_notes']}")
     # print(f"Use Full Paths: {config['use_full_paths']}")

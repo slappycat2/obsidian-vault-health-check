@@ -12,9 +12,9 @@ class Config:
         self.bat_num = 0
         self.chk_yaml = []
         self.dbug = False
-        self.vault_path = "E:\\o2"
-        self.dirs_dot = [f.name for f in os.scandir(self.vault_path) if
-                         f.is_dir() and f.path.startswith(f"{self.vault_path}\\.")]
+        self.dir_vault = "E:\\o2"
+        self.dirs_dot = [f.name for f in os.scandir(self.dir_vault) if
+                         f.is_dir() and f.path.startswith(f"{self.dir_vault}\\.")]
         self.dirs_skip_rel_str = ["z_meta", "z_resources"]
         self.dirs_skip_abs_lst = self.dirs_dot + self.dirs_skip_rel_str
         self.dup_files = {}
@@ -25,9 +25,9 @@ class Config:
         self.rgx_body = re.compile('(^|(\\[))([)([A-Za-z0-9_]+)[:]{2}(.*?)(\\]?\\]?)($|\\])')
         self.rgx_noTZdatePattern = r"([0-9]{4})[-\/]([0-1]?[0-9]{1})[-\/]([0-3])?([0-9]{1})(\s+)([0-9]{2}:[0-9]{2}:[0-9]{2})(.*)"
         self.rgx_noTZdateReplace = r"\1-\2-\3\4 \6"
-        self.v_chk_cfg_pname = ""
-        self.v_chk_xls_pname = ""
-        self.wb_exec_path = "C:\\Program Files\\Microsoft Office\\root\\Office16\\EXCEL.EXE"
+        self.v_chk_pn_cfg = ""
+        self.v_chk_pn_wbs = ""
+        self.pn_wb_exec = "C:\\Program Files\\Microsoft Office\\root\\Office16\\EXCEL.EXE"
 
     def get_last_cfg(self):
 
@@ -42,7 +42,7 @@ class Config:
         latest_file = max(list_of_files, key=os.path.getctime)
         _, filename = os.path.split(latest_file)
 
-        print(f"v_chk_cfg: Read Last Config file: {self.v_chk_cfg_pname}")
+        print(f"v_chk_cfg: Read Last Config file: {self.v_chk_pn_cfg}")
 
         return latest_file
 
@@ -55,16 +55,16 @@ class Config:
             c_file = f"G:\\dev\\v_chk\\batch_files\\v_chk_{c_num:04d}.pickle"
 
         self.bat_num = c_num
-        self.v_chk_cfg_pname = c_file
-        self.v_chk_xls_pname = \
+        self.v_chk_pn_cfg = c_file
+        self.v_chk_pn_wbs = \
             f"G:\\dev\\v_chk\\workbooks\\v_chk_{self.bat_num:04d}.xlsx"
 
-        print(f"v_chk_cfg: Write Next Config file: {self.v_chk_cfg_pname}")
+        print(f"v_chk_cfg: Write Next Config file: {self.v_chk_pn_cfg}")
         return 0
 
     def write_config(self, cfg_obj):
         self.get_next_cfg()
-        cfg_file_name = self.v_chk_cfg_pname
+        cfg_file_name = self.v_chk_pn_cfg
         try:
             with open(cfg_file_name, "wb") as pkl_file:
                 pickle.dump(cfg_obj, pkl_file)
@@ -76,14 +76,14 @@ class Config:
         return 0
 
     def read_config(self):
-        self.v_chk_cfg_pname = self.get_last_cfg()
-        if self.v_chk_cfg_pname is None:
+        self.v_chk_pn_cfg = self.get_last_cfg()
+        if self.v_chk_pn_cfg is None:
             print("v_chk_cfg: Error in Read Config- No Config File Found")
             return False
         else:
-            print(f"v_chk_cfg-read_config: Reading Config file: {self.v_chk_cfg_pname}")
+            print(f"v_chk_cfg-read_config: Reading Config file: {self.v_chk_pn_cfg}")
         try:
-            with open(self.v_chk_cfg_pname, "rb") as f:
+            with open(self.v_chk_pn_cfg, "rb") as f:
                 cfg = pickle.load(f)
 
         except Exception as ex:
@@ -95,8 +95,8 @@ class Config:
 if __name__ == "__main__":
     cfg = Config()
     cfg = cfg.read_config()
-    print(f"cfg.v_chk_cfg_pname: {cfg.v_chk_cfg_pname}")
-    print(f"cfg.v_chk_xls_pname: {cfg.v_chk_xls_pname}")
+    print(f"cfg.v_chk_pn_cfg: {cfg.v_chk_pn_cfg}")
+    print(f"cfg.v_chk_pn_wbs: {cfg.v_chk_pn_wbs}")
     print(f"cfg.dirs_dot: {cfg.dirs_dot}")
     print(f"cfg.dirs_skip_rel_str: {cfg.dirs_skip_rel_str}")
     print(f"cfg.dirs_skip_abs_lst: {cfg.dirs_skip_abs_lst}")
@@ -105,12 +105,12 @@ if __name__ == "__main__":
     print(f"cfg.rgx_body: {cfg.rgx_body}")
     print(f"cfg.rgx_noTZdatePattern: {cfg.rgx_noTZdatePattern}")
     print(f"cfg.rgx_noTZdateReplace: {cfg.rgx_noTZdateReplace}")
-    print(f"cfg.v_chk_cfg_pname: {cfg.v_chk_cfg_pname}")
-    print(f"cfg.v_chk_xls_pname: {cfg.v_chk_xls_pname}")
-    print(f"cfg.wb_exec_path: {cfg.wb_exec_path}")
+    print(f"cfg.v_chk_pn_cfg: {cfg.v_chk_pn_cfg}")
+    print(f"cfg.v_chk_pn_wbs: {cfg.v_chk_pn_wbs}")
+    print(f"cfg.pn_wb_exec: {cfg.pn_wb_exec}")
     print(f"cfg.bat_num: {cfg.bat_num}")
     print(f"cfg.dbug: {cfg.dbug}")
-    print(f"cfg.vault_path: {cfg.vault_path}")
+    print(f"cfg.dir_vault: {cfg.dir_vault}")
 
     print(f"cfg.dup_files: {cfg.dup_files}")
     print(f"cfg.files: {cfg.files}")

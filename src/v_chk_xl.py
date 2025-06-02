@@ -133,14 +133,14 @@ class ExcelExporter:
         self.cfg = self.wb_def.get('cfg', {})
 
         self.tab_seq = self.cfg['tab_seq']   # ['summ', 'pros', 'tags', 'dups', 'xyml']  # ['summ', 'pros', 'tags', 'dups']
-        self.vault_path = self.cfg['vault_path']
+        self.dir_vault = self.cfg['dir_vault']
         self.vault_id = self.cfg['vault_id']
-        self.xls_pname = self.cfg['xls_pname']
+        self.pn_wbs = self.cfg['pn_wbs']
         if self.DBUG_LVL >= 0:
-            print(f"Building workbook {self.xls_pname}...")
-        self.bat_pname = self.cfg['cfg_pname']
+            print(f"Building workbook {self.pn_wbs}...")
+        self.pn_batch = self.cfg['pn_cfg']
         self.bat_num = self.cfg['bat_num']
-        self.wb_exec_path = self.cfg['wb_exec_path']
+        self.pn_wb_exec = self.cfg['pn_wb_exec']
         self.wb_data = self.wb_def.get('wb_data', {})
         self.obs_props = self.wb_data.get('obs_props', {})
         self.obs_atags = self.wb_data.get('obs_atags', {})
@@ -161,18 +161,18 @@ class ExcelExporter:
         self.rgx_sub_strip_inline_code = r'`[^`]*`'
 
         # self.code_q_types = ['TABLE', 'LIST', 'TASK', 'CALENDAR']
-        self.plugin_lib = PluginMan(self.vault_path)
+        self.plugin_lib = PluginMan(self.dir_vault)
 
         if self.DBUG_LVL > 8:
-            print(f"ExcelExport - cfg.wb_exec_path: {self.wb_exec_path}")
+            print(f"ExcelExport - cfg.pn_wb_exec: {self.pn_wb_exec}")
 
-        self.exl_file = Path(self.wb_exec_path)
+        self.exl_file = Path(self.pn_wb_exec)
 
     def export(self, dbug_lvl):
     # =================================================================================
         self.DBUG_LVL = dbug_lvl
         if self.DBUG_LVL > 1:
-            print(f"ExcelExport.export - wb_exec_path: {self.wb_exec_path}")
+            print(f"ExcelExport.export - pn_wb_exec: {self.pn_wb_exec}")
 
         # Create the workbook instance
         wb = openpyxl.Workbook()
@@ -235,7 +235,8 @@ class ExcelExporter:
 
         for key, value in self.cfg.items():
             if isinstance(value, (list, tuple)):
-                val = ' '.join([str(item) for item in value])
+                val = ', '.join([str(item) for item in value])
+                val = f"[{val}]"
             elif isinstance(value, dict):
                 val = str(value)
             else:
@@ -295,7 +296,6 @@ class ExcelExporter:
         col_idx = tbl_beg_col
         row_idx = tbl_hdr_row
         for hdr_key, hdr_col_def_list in tab_cd_table_hdr.items():
-
             # unpack header definitions
             col_idx, cell = self.export_cell(tab, hdr_col_def_list, '', tbl_hdr_row)
             if self.DBUG_LVL > 8:
@@ -322,15 +322,6 @@ class ExcelExporter:
 
         for prop_name, values_dict in sorted(tab_data_src.items()):
 
-            # filter props for those belonging to this tab only
-            # if tab_id == 'dups' and prop_name != 'xkey_dups':
-            #     continue
-            # if tab_id == 'xyml' and 'xkey_xyml' not in prop_name:
-            #     continue
-            # if (tab_id == 'pros' or tab_id == 'vals') and prop_name == "tags":
-            #     continue
-            # if tab_id == 'tags' and prop_name != "tags":
-            #     continue
             if tab_id == 'summ':
                 continue
 
@@ -479,7 +470,7 @@ class ExcelExporter:
                     obs_link = file
                     if tab_id == "dups":
                         # Need qualified relative path w/o vault path
-                        obs_link = self.obs_hyperlink(file.replace(self.vault_path, ""))
+                        obs_link = self.obs_hyperlink(file.replace(self.dir_vault, ""))
                     else:
                         # Just need the MD filename
                         if isinstance(file, str) and file.endswith('.md') and Path(file).is_file():
@@ -745,10 +736,10 @@ class ExcelExporter:
 
     def save_workbook(self, wb):
         if self.DBUG_LVL >= 0:
-            print(f"Saving Spreadsheet: {self.xls_pname}")
+            print(f"Saving Spreadsheet: {self.pn_wbs}")
 
         # save and load workbook
-        if os.path.isfile(self.xls_pname):
+        if os.path.isfile(self.pn_wbs):
             try_again = True
             w_time = 2 # secs
             retry_max = 60
@@ -756,27 +747,27 @@ class ExcelExporter:
             while try_again:
                 try:
                     retry_count += 1
-                    os.remove(self.xls_pname)
+                    os.remove(self.pn_wbs)
                     try_again = False
                 except PermissionError:
-                    print(f"Attempt {retry_count} to save {self.xls_pname}...")
+                    print(f"Attempt {retry_count} to save {self.pn_wbs}...")
                     if retry_count < retry_max:
-                        print(f"File {self.xls_pname} must be closed. Attempt {retry_count + 1} (of {retry_max} max.) will begin in {w_time} seconds...\n")
+                        print(f"File {self.pn_wbs} must be closed. Attempt {retry_count + 1} (of {retry_max} max.) will begin in {w_time} seconds...\n")
                         time.sleep(w_time)
                     else:
-                        print(f"File {self.xls_pname} must be closed. Max Retries ({retry_max}) exceeded. {__file__} will now exit.")
+                        print(f"File {self.pn_wbs} must be closed. Max Retries ({retry_max}) exceeded. {__file__} will now exit.")
                         sys.exit(1)
 
                 except Exception as e:
-                    raise Exception(f"Error removing file {self.xls_pname}: {e}")
+                    raise Exception(f"Error removing file {self.pn_wbs}: {e}")
 
-        wb.save(self.xls_pname)
+        wb.save(self.pn_wbs)
 
         if self.OPEN_ON_CREATE:
             self.load_workbook()
 
     def load_workbook(self):
-        pid = Popen([self.wb_exec_path, self.xls_pname]).pid
+        pid = Popen([self.pn_wb_exec, self.pn_wbs]).pid
         return pid
 
     def obs_hyperlink(self, file):
@@ -937,20 +928,20 @@ if __name__ == "__main__":
     # wb = WbDataDef(DBUG_LVL)
     # wbdef = cfg.read_cfg_data()
     # cfg = wbdef['cfg']
-    # xls_pname = cfg['xls_pname']
-    # wb_exec_path = cfg['wb_exec_path']
+    # pn_wbs = cfg['pn_wbs']
+    # pn_wb_exec = cfg['pn_wb_exec']
 
     # wb_cfg = Wb_Cfg()
 
     # if cfg:
-    #     print(f"v_chk_xl: Using last saved config: {xls_pname}")
+    #     print(f"v_chk_xl: Using last saved config: {pn_wbs}")
     #     exporter = ExcelExporter(DBUG_LVL)
     #     exporter.export(DBUG_LVL)
 #
-    #     print(f"v_chk_xl:Loading Spreadsheet: {wb_exec_path} - {xls_pname}")
+    #     print(f"v_chk_xl:Loading Spreadsheet: {pn_wb_exec} - {pn_wbs}")
     #     time.sleep(5)
 #
-    #     # pid = Popen([wb_exec_path, xls_pname]).pid
+    #     # pid = Popen([pn_wb_exec, pn_wbs]).pid
     # else:
-    #     print(f"v_chk_xl: Error reading config in main: {xls_pname}")
+    #     print(f"v_chk_xl: Error reading config in main: {pn_wbs}")
     #     print(f"v_chk_xl: Exiting...")

@@ -192,7 +192,7 @@ def a51_dump_colors(self, cfg, wb, colors_tab):
             col_idx = start_col
 
 if __name__ == "__main__":
-    # vault_path = "E:\o2"  # Change this to your vault path
+    # dir_vault = "E:\o2"  # Change this to your vault path
     # output_file = "obsidian_metadata.xlsx"
 
     cfg = Config()
@@ -201,14 +201,14 @@ if __name__ == "__main__":
     # wb_cfg = Wb_Cfg()
 
     if cfg:
-        print(f"v_chk_xl: Using last saved config: {cfg.v_chk_xls_pname}")
+        print(f"v_chk_xl: Using last saved config: {cfg.v_chk_pn_wbs}")
         exporter = ExcelExporter(cfg)
         exporter.export_wb(cfg)
 
-        print(f"v_chk_xl:Loading Spreadsheet: {cfg.wb_exec_path} - {cfg.v_chk_xls_pname}")
+        print(f"v_chk_xl:Loading Spreadsheet: {cfg.pn_wb_exec} - {cfg.v_chk_pn_wbs}")
         time.sleep(5)
 
-        # pid = Popen([cfg.wb_exec_path, cfg.v_chk_xls_pname]).pid
+        # pid = Popen([cfg.pn_wb_exec, cfg.v_chk_pn_wbs]).pid
     else:
-        print(f"v_chk_xl: Error reading config in main: {cfg.v_chk_xls_pname}")
+        print(f"v_chk_xl: Error reading config in main: {cfg.v_chk_pn_wbs}")
         print(f"v_chk_xl: Exiting...")

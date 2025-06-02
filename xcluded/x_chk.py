@@ -57,15 +57,15 @@ def upd_pros_dict(pros_dict, ukey, uval, filepath):
 
 class ObsidianVaultProcessor:
     def __init__(self, cfg):
-        print(f"Processing vault: {cfg.vault_path}")
+        print(f"Processing vault: {cfg.dir_vault}")
         ret_val = self.process_vault()
         if ret_val == 0:
-            print(f"Metadata extracted successfully from {cfg.vault_path}")
+            print(f"Metadata extracted successfully from {cfg.dir_vault}")
         else:
-            print(f"Error in extracting metadata from {cfg.vault_path}")
+            print(f"Error in extracting metadata from {cfg.dir_vault}")
 
     def process_vault(self):
-        v_path_obj = Path(cfg.vault_path)
+        v_path_obj = Path(cfg.dir_vault)
         for md_file in v_path_obj.rglob("*.md"):
 
             # md_file and BASE_DIR are WindowsPath objects, not a strings!
@@ -220,8 +220,8 @@ if __name__ == "__main__":
 
 
     
-    print(f"Metadata exported successfully to {cfg.v_chk_xls_pname}")
+    print(f"Metadata exported successfully to {cfg.v_chk_pn_wbs}")
     time.sleep(5)
 
-    pid = Popen([cfg.wb_exec_path, cfg.v_chk_xls_pname]).pid
+    pid = Popen([cfg.pn_wb_exec, cfg.v_chk_pn_wbs]).pid
 
