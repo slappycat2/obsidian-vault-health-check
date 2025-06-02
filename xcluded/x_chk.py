@@ -79,7 +79,7 @@ class ObsidianVaultProcessor:
 
             x_dir_test = False
             for x_dir in md_file.parts:
-                if x_dir in cfg.dirs_skip:
+                if x_dir in cfg.dirs_skip_abs_lst:
                     x_dir_test = True
                     continue  # this only exits this for loop
             if x_dir_test:
@@ -223,5 +223,5 @@ if __name__ == "__main__":
     print(f"Metadata exported successfully to {cfg.v_chk_xls_pname}")
     time.sleep(5)
 
-    pid = Popen([cfg.xl_exec_path, cfg.v_chk_xls_pname]).pid
+    pid = Popen([cfg.wb_exec_path, cfg.v_chk_xls_pname]).pid
 

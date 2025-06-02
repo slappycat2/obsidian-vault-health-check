@@ -3,7 +3,7 @@ import time
 from subprocess import Popen
 import urllib.parse
 import copy
-
+import re
 
 import openpyxl
 
@@ -14,7 +14,7 @@ from openpyxl.worksheet.table import Table, TableStyleInfo
 from openpyxl.drawing.image import Image
 from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
 
-from v_chk_cfg_data import *
+from v_chk_wb_setup import *
 # from v_chk_xl_tabs import *
 from v_chk_class_lib import *
 
@@ -29,11 +29,9 @@ from v_chk_class_lib import *
 # Todo: Bug-016 - fix how IsVisCol column is defined and calc'd (it's in 3 places!)
 # Todo: Bug-018 - Needs better font support
 # Todo: Bug-020 - Exclude templates and Nests from Vault Tabs (props, tags, files, etc.)
-# Todo: Bug-022 -
-# Todo: Bug-0 -
+# Todo: Bug-022 - Remove this section and track bugs and ERs in Github
 # Todo: Bug-0 -
 
-# Todo: ER-001 - Write GUI for Config
 # Todo: ER-002 - Make last file links column show "More exist!"
 # Todo: ER-003 - Gather more stats?
 #   - Most Tags
@@ -46,14 +44,14 @@ from v_chk_class_lib import *
 #        as [#Tag, #Tag/1, #Tag/1/A].
 #      file.etags: A list of all explicit tags in the note;
 #        unlike file.tags, does not break subtags down, i.e. [#Tag/1/A] <- so this w/b 1 tag
-# Todo: ER-008 - Handle sub-tags (assets/mac/software) better
+# Todo: ER-008 - Handle sub-tags (eg, assets/mac/software) better
 # Todo: ER-009 - Task shorthands are not supported
 #      (see https://blacksmithgu.github.io/obsidian-dataview/annotation/metadata-tasks/#field-shorthands)
 # Todo: ER-011 - Array Formulas in Summary? Can't think of one, now, but...
 # Todo: ER-012 - Include a Flag to Display Relative Path or just NoteName in all Hyperlinks
 # Todo: ER-013 - Identify Singular and Plural usages of properties and tags
 # Todo: ER-014 - Fix Area51 Table Dump
-# Todo: ER-015 - Rename dirs_special to dirs_skip_user
+# Todo: ER-015 - Rename dirs_skip_rel_str to dirs_skip_abs_lst_user
 # Todo: ER-0 -
 # Todo: ER-0 -
 # Todo: ER-0 -
@@ -64,6 +62,8 @@ from v_chk_class_lib import *
 #   - Clean up code!!!
 
 # Done
+# Todo: Bug-023 - Highlight use of uppercase. Done. (Can only be done in Files)
+# Todo: ER-001 - Write GUI for Config
 # Todo: ER-010 - Stats: Deprecated Props (alias, cssclass, etc)-Noted in red/italic only, not totals
 # Todo: Bug-017 - Move Properties Summary to a new tab
 # Todo: Bug-012 - Unique Values calc as diff on Tags when all are showing
@@ -129,7 +129,7 @@ class ExcelExporter:
         cfg_setup = WbDataDef(self.DBUG_LVL)
         self.xyml_descs = cfg_setup.xyml_descs
 
-        self.wb_def = cfg_setup.read_cfg_data()
+        self.wb_def = cfg_setup.read_bat_data()
         self.cfg = self.wb_def.get('cfg', {})
 
         self.tab_seq = self.cfg['tab_seq']   # ['summ', 'pros', 'tags', 'dups', 'xyml']  # ['summ', 'pros', 'tags', 'dups']
@@ -138,9 +138,9 @@ class ExcelExporter:
         self.xls_pname = self.cfg['xls_pname']
         if self.DBUG_LVL >= 0:
             print(f"Building workbook {self.xls_pname}...")
-        self.cfg_pname = self.cfg['cfg_pname']
-        self.cfg_num = self.cfg['cfg_num']
-        self.xl_exec_path = self.cfg['xl_exec_path']
+        self.bat_pname = self.cfg['cfg_pname']
+        self.bat_num = self.cfg['bat_num']
+        self.wb_exec_path = self.cfg['wb_exec_path']
         self.wb_data = self.wb_def.get('wb_data', {})
         self.obs_props = self.wb_data.get('obs_props', {})
         self.obs_atags = self.wb_data.get('obs_atags', {})
@@ -164,15 +164,15 @@ class ExcelExporter:
         self.plugin_lib = PluginMan(self.vault_path)
 
         if self.DBUG_LVL > 8:
-            print(f"ExcelExport - cfg.xl_exec_path: {self.xl_exec_path}")
+            print(f"ExcelExport - cfg.wb_exec_path: {self.wb_exec_path}")
 
-        self.exl_file = Path(self.xl_exec_path)
+        self.exl_file = Path(self.wb_exec_path)
 
     def export(self, dbug_lvl):
     # =================================================================================
         self.DBUG_LVL = dbug_lvl
         if self.DBUG_LVL > 1:
-            print(f"ExcelExport.export - xl_exec_path: {self.xl_exec_path}")
+            print(f"ExcelExport.export - wb_exec_path: {self.wb_exec_path}")
 
         # Create the workbook instance
         wb = openpyxl.Workbook()
@@ -206,12 +206,12 @@ class ExcelExporter:
         # add to worksheet and anchor next to cells
         tab.add_image(img, 'A1')
 
-        # Export fixed grid cells
-        val = ''
-        tot_table = tab_def['tab_cd_fixed_grid']
         # ========================================================================
         # export Totals Grid, both headers and formulas for totals
         # ========================================================================
+        val = ''
+        # row_idx = 19
+        tot_table = tab_def['tab_cd_fixed_grid']
 
         for tot_key, tot_col_def_list in tot_table.items():
             if self.DBUG_LVL > 3: # and self.DBUG_TAB == self.tab_def['tab_id']:
@@ -224,6 +224,28 @@ class ExcelExporter:
             #   col, w, t_clr, fill_clr, Bold, Align                               len=6
             row_idx = 0
             row_idx, cell = self.export_cell(tab, tot_col_def_list, val, row_idx)
+
+        # ========================================================================
+        # export cfg
+        # ========================================================================
+        cfg_cd_def = self.tab_def['cfg-dump']
+        col_idx = cfg_cd_def[0]
+        row_idx = cfg_cd_def[1]
+        col_sav = col_idx
+
+        for key, value in self.cfg.items():
+            if isinstance(value, (list, tuple)):
+                val = ' '.join([str(item) for item in value])
+            elif isinstance(value, dict):
+                val = str(value)
+            else:
+                val = value
+
+            _, cell = self.export_cell(tab, cfg_cd_def, key, row_idx)
+            cfg_cd_def[0] = 0
+            _, cell = self.export_cell(tab, cfg_cd_def, val, row_idx)
+            cfg_cd_def[0] = col_sav
+            row_idx += 1
 
 
     def export_tab(self, wb):
@@ -754,7 +776,7 @@ class ExcelExporter:
             self.load_workbook()
 
     def load_workbook(self):
-        pid = Popen([self.xl_exec_path, self.xls_pname]).pid
+        pid = Popen([self.wb_exec_path, self.xls_pname]).pid
         return pid
 
     def obs_hyperlink(self, file):
@@ -906,27 +928,29 @@ class ExcelExporter:
         return
 
 if __name__ == "__main__":
-    # vault_path = "E:\o2"  # Change this to your vault path
-    # output_file = "obsidian_metadata.xlsx"
     DBUG_LVL = 1
 
-    cfg = WbDataDef(DBUG_LVL)
-    wbdef = cfg.read_cfg_data()
-    cfg = wbdef['cfg']
-    xls_pname = cfg['xls_pname']
-    xl_exec_path = cfg['xl_exec_path']
+    # cfg_setup = SysConfig()
+    # cfg = cfg_setup.cfg
+    exporter = ExcelExporter(DBUG_LVL)
+    exporter.export(DBUG_LVL)
+    # wb = WbDataDef(DBUG_LVL)
+    # wbdef = cfg.read_cfg_data()
+    # cfg = wbdef['cfg']
+    # xls_pname = cfg['xls_pname']
+    # wb_exec_path = cfg['wb_exec_path']
 
     # wb_cfg = Wb_Cfg()
 
-    if cfg:
-        print(f"v_chk_xl: Using last saved config: {xls_pname}")
-        exporter = ExcelExporter(DBUG_LVL)
-        exporter.export(DBUG_LVL)
-
-        print(f"v_chk_xl:Loading Spreadsheet: {xl_exec_path} - {xls_pname}")
-        time.sleep(5)
-
-        # pid = Popen([xl_exec_path, xls_pname]).pid
-    else:
-        print(f"v_chk_xl: Error reading config in main: {xls_pname}")
-        print(f"v_chk_xl: Exiting...")
+    # if cfg:
+    #     print(f"v_chk_xl: Using last saved config: {xls_pname}")
+    #     exporter = ExcelExporter(DBUG_LVL)
+    #     exporter.export(DBUG_LVL)
+#
+    #     print(f"v_chk_xl:Loading Spreadsheet: {wb_exec_path} - {xls_pname}")
+    #     time.sleep(5)
+#
+    #     # pid = Popen([wb_exec_path, xls_pname]).pid
+    # else:
+    #     print(f"v_chk_xl: Error reading config in main: {xls_pname}")
+    #     print(f"v_chk_xl: Exiting...")

@@ -42,9 +42,9 @@ class WbExport(WbDataDef):
         # self.DBUG_LVL = 9  # print everything (includes export_cell!)
 
         if self.DBUG_LVL > 8:
-            print(f"WorkbookDefinition - self.xl_exec_path: {self.xl_exec_path}")
+            print(f"WorkbookDefinition - self.wb_exec_path: {self.wb_exec_path}")
 
-        self.exl_file = Path(self.xl_exec_path)
+        self.exl_file = Path(self.wb_exec_path)
 
 
     @staticmethod
@@ -73,7 +73,7 @@ class WbExport(WbDataDef):
 
     @staticmethod
     def load_spreadsheet(self):
-        pid = Popen([self.xl_exec_path, self.xls_pname]).pid
+        pid = Popen([self.wb_exec_path, self.xls_pname]).pid
         return pid
 
     def xl_clean_cell(self, cell_value):
@@ -120,7 +120,7 @@ class WbExport(WbDataDef):
     def export_wb(self):
     # =================================================================================
         if self.DBUG_LVL > 1:
-            print(f"ExcelExport.export - self.xl_exec_path: {self.xl_exec_path}")
+            print(f"ExcelExport.export - self.wb_exec_path: {self.wb_exec_path}")
 
         # Create the workbook instance
         wb = openpyxl.Workbook()
@@ -1241,7 +1241,7 @@ class TabExport(WbExport):
         cell.font = Font(size=11, bold=True)
         cell = summary_tab.cell(row=5, column=5, value=f"{self.v_chk_cfg_pname}")
         cell.font = Font(size=11, bold=True)
-        cell = summary_tab.cell(row=6, column=5, value=f"{self.cfg_num:04d}")
+        cell = summary_tab.cell(row=6, column=5, value=f"{self.bat_num:04d}")
         cell.font = Font(size=11, bold=True)
 #       xl_set_border(summary_tab, "C4:H6", "thin", tab_color)
         self.xl_set_border(summary_tab, "C10:F12", "thin", tab_color)
@@ -1333,10 +1333,10 @@ if __name__ == "__main__":
         # exporter = ExcelExporter(cfg)
         # exporter.export_wb(cfg)
 
-        print(f"v_chk_xl:Loading Spreadsheet: {wbx.xl_exec_path} - {wbx.xls_pname}")
+        print(f"v_chk_xl:Loading Spreadsheet: {wbx.wb_exec_path} - {wbx.xls_pname}")
         time.sleep(5)
 
-        # pid = Popen([wbx.xl_exec_path, wbx.xls_pname]).pid
+        # pid = Popen([wbx.wb_exec_path, wbx.xls_pname]).pid
     else:
         print(f"v_chk_xl: Error reading config in main: {wbx.xls_pname}")
         print(f"v_chk_xl: Exiting...")

@@ -78,4 +78,7 @@ fabric.properties
 .idea/caches/build_file_checksums.ser
 
 .venv
+xcluded
+data
+__pycache__
 

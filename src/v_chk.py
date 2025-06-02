@@ -1,4 +1,4 @@
-from operator import truediv
+import re
 
 from v_chk_wb_tabs import *
 from v_chk_xl import *
@@ -25,7 +25,7 @@ class VaultHealthCheck:   # WbConfig
         # self.cfg_setup = WbDataDef(DBUG_LVL)
         self.wb_data_obj = WbDataDef(DBUG_LVL)
 
-        self.wb_data_obj.get_next_cfg()     # this initials wb_data
+        self.wb_data_obj.get_next_bat()     # this initials wb_data
         self.plugin_id_def = self.wb_data_obj.plugin_id_def
         self.wb_def = self.wb_data_obj.wb_def
 
@@ -78,12 +78,12 @@ class VaultHealthCheck:   # WbConfig
 
             x_dir_test = False
             for x_dir in md_file.parts:
-                if x_dir in self.cfg['dirs_skip']:
+                if x_dir in self.cfg['dirs_skip_abs_lst']:
                     x_dir_test = True
                     continue  # this only exits this for loop
             if x_dir_test:
                 self.ctot[1] += 1
-                print(f"Skipping file: {md_file} is in dirs_skip")
+                print(f"Skipping file: {md_file} is in dirs_skip_abs_lst")
                 continue # this gets the next file...
 
             self.isTemplate = False
@@ -94,7 +94,7 @@ class VaultHealthCheck:   # WbConfig
                 # this will require a special decoding of the markdown
                 # without using PyYaml, since they would not load properly
                 # otherwise it will like all be invalid properties...
-                # continue
+                continue
 
             md_pname = str(md_file)
 
@@ -114,7 +114,7 @@ class VaultHealthCheck:   # WbConfig
         self.wb_def['wb_data']['obs_plugs'] = self.obs_plugs
         self.cfg['ctot'] = self.ctot
         # Vault processing complete! Get wb tab defs,
-        self.wb_data_obj.write_cfg_data()
+        self.wb_data_obj.write_bat_data()
 
         if self.DBUG_LVL > 0:
             print(f"Vault ({self.cfg['vault_path']}) processing complete.")
@@ -469,9 +469,9 @@ if __name__ == "__main__":
     exporter = ExcelExporter(DBUG_LVL)
     exporter.export(DBUG_LVL)
 
-        # print(f"v_chk_xl:Loading Spreadsheet: {xl_exec_path} - {xls_pname}")
+        # print(f"v_chk_xl:Loading Spreadsheet: {wb_exec_path} - {xls_pname}")
         # time.sleep(5)
-        # pid = Popen([xl_exec_path, xls_pname]).pid
+        # pid = Popen([wb_exec_path, xls_pname]).pid
 
         # shelve_file = shelve.open("v_def.db")
         # shelve_file['v_def'] = v_def
@@ -488,7 +488,7 @@ if __name__ == "__main__":
         print(f"\n{lin}")
         # self.tab_def['tab_cd_table_hdr']['Row']
         print(f"Vault Health Check Complete.")
-        print(f"\nConfig Sys File: {cfg['cfg_sys_pname']}")
+        print(f"\nConfig Sys File: {cfg['cfg_pname']}")
         print(f"     Next Data File: {cfg['cfg_pname']}")
         print(f"            Wb File: {cfg['xls_pname']}")
 

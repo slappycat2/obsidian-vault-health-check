@@ -10,14 +10,14 @@ from v_chk_class_lib import Colors
 class Config:
     def __init__(self):
         self.c_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.cfg_num = 0
+        self.bat_num = 0
         self.chk_yaml = []
         self.dbug = False
         self.vault_path = "E:\\o2"
         self.dirs_dot = [f.name for f in os.scandir(self.vault_path) if
                          f.is_dir() and f.path.startswith(f"{self.vault_path}\\.")]
-        self.dirs_special = ["z_meta", "z_resources"]
-        self.dirs_skip = self.dirs_dot + self.dirs_special
+        self.dirs_skip_rel_str = ["z_meta", "z_resources"]
+        self.dirs_skip_abs_lst = self.dirs_dot + self.dirs_skip_rel_str
         self.dup_files = {}
         self.files = {}  # {"filename": {"links":, [list of values]...}
                      # pros {"key":    {"val":  [list of files], "val", [list of
@@ -40,12 +40,12 @@ class Config:
 
         self.v_chk_cfg_pname = ""
         self.v_chk_xls_pname = ""
-        self.xl_exec_path = "C:\\Program Files\\Microsoft Office\\root\\Office16\\EXCEL.EXE"
+        self.wb_exec_path = "C:\\Program Files\\Microsoft Office\\root\\Office16\\EXCEL.EXE"
 
     def get_last_cfg(self):
         """Returns the name of the latest (most recent) file
         of the joined path(s)"""
-        path = "/data/cfgs\\"
+        path = "/data/batch_files\\"
         pattern = "v_chk_*.yaml"
         fullpath = os.path.join(path, pattern)
         list_of_files = glob.iglob(fullpath)  # You may use iglob in Python3
@@ -61,16 +61,16 @@ class Config:
 
     def get_next_cfg(self):
         c_num = 0
-        c_file = f"G:\\dev\\v_chk\\cfgs\\v_chk_{c_num:04d}.yaml"
+        c_file = f"G:\\dev\\v_chk\\batch_files\\v_chk_{c_num:04d}.yaml"
 
         while Path(c_file).exists():
             c_num += 1
-            c_file = f"G:\\dev\\v_chk\\data\cfgs\\v_chk_{c_num:04d}.yaml"
+            c_file = f"G:\\dev\\v_chk\\data\batch_files\\v_chk_{c_num:04d}.yaml"
 
-        self.cfg_num = c_num
+        self.bat_num = c_num
         self.v_chk_cfg_pname = c_file
         self.v_chk_xls_pname = \
-            f"G:\\dev\\v_chk\\xlWork\\v_chk_{self.cfg_num:04d}.xlsx"
+            f"G:\\dev\\v_chk\\workbooks\\v_chk_{self.bat_num:04d}.xlsx"
 
         print(f"v_chk_cfg: Write Next Config file: {self.v_chk_cfg_pname}")
         return 0
@@ -84,15 +84,15 @@ class Config:
                 # yaml.dump(range(50), width=50, indent=4)
                 yaml.dump({
                     'c_date':       self.c_date,
-                    'cfg_num':      self.cfg_num,
+                    'bat_num':      self.bat_num,
                     'dbug':         self.dbug,
                     'v_chk_cfg_pname': self.v_chk_cfg_pname,
                     'v_chk_xls_pname': self.v_chk_xls_pname,
                     'vault_path':   self.vault_path,
                     'dirs_dot':     self.dirs_dot,
-                    'dirs_special': self.dirs_special,
-                    'dirs_skip':    self.dirs_skip,
-                    'xl_exec_path': self.xl_exec_path,
+                    'dirs_skip_rel_str': self.dirs_skip_rel_str,
+                    'dirs_skip_abs_lst':    self.dirs_skip_abs_lst,
+                    'wb_exec_path': self.wb_exec_path,
                     :        self.pros,
                     'files':        self.files,
                     'chk_yaml':     self.chk_yaml,
@@ -118,15 +118,15 @@ class Config:
 
             config_data = yaml.safe_load(cfg_data)
             self.c_date         = config_data.get('c_date', "")
-            self.cfg_num        = config_data.get('cfg_num', {})
+            self.bat_num        = config_data.get('bat_num', {})
             self.dbug           = config_data.get('dbug', False)
             self.v_chk_cfg_pname = config_data.get('v_chk_cfg_pname', {})
             self.v_chk_xls_pname = config_data.get('v_chk_xls_pname', {})
             self.vault_path     = config_data.get('vault_path', {})
             self.dirs_dot = config_data.get('dirs_dot', {})
-            self.dirs_special = config_data.get('dirs_special', {})
-            self.dirs_skip = config_data.get('dirs_skip', {})
-            self.xl_exec_path = config_data.get('xl_exec_path', {})
+            self.dirs_skip_rel_str = config_data.get('dirs_skip_rel_str', {})
+            self.dirs_skip_abs_lst = config_data.get('dirs_skip_abs_lst', {})
+            self.wb_exec_path = config_data.get('wb_exec_path', {})
             self.pros          = config_data.get(, {})
             self.files          = config_data.get('files', {})
             self.chk_yaml       = config_data.get('chk_yaml', [])
@@ -148,8 +148,8 @@ if __name__ == "__main__":
         print(f"cfg.v_chk_cfg_pname: {cfg.v_chk_cfg_pname}")
         print(f"cfg.v_chk_xls_pname: {cfg.v_chk_xls_pname}")
         print(f"cfg.dirs_dot: {cfg.dirs_dot}")
-        print(f"cfg.dirs_special: {cfg.dirs_special}")
-        print(f"cfg.dirs_skip: {cfg.dirs_skip}")
+        print(f"cfg.dirs_skip_rel_str: {cfg.dirs_skip_rel_str}")
+        print(f"cfg.dirs_skip_abs_lst: {cfg.dirs_skip_abs_lst}")
 
         print(f"cfg.rgx_boundary: {cfg.rgx_boundary}")
         print(f"cfg.rgx_body: {cfg.rgx_body}")
@@ -157,8 +157,8 @@ if __name__ == "__main__":
         print(f"cfg.rgx_noTZdateReplace: {cfg.rgx_noTZdateReplace}")
         print(f"cfg.v_chk_cfg_pname: {cfg.v_chk_cfg_pname}")
         print(f"cfg.v_chk_xls_pname: {cfg.v_chk_xls_pname}")
-        print(f"cfg.xl_exec_path: {cfg.xl_exec_path}")
-        print(f"cfg.cfg_num: {cfg.cfg_num}")
+        print(f"cfg.wb_exec_path: {cfg.wb_exec_path}")
+        print(f"cfg.bat_num: {cfg.bat_num}")
         print(f"cfg.dbug: {cfg.dbug}")
         print(f"cfg.vault_path: {cfg.vault_path}")
 

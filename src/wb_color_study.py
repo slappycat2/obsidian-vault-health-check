@@ -205,10 +205,10 @@ if __name__ == "__main__":
         exporter = ExcelExporter(cfg)
         exporter.export_wb(cfg)
 
-        print(f"v_chk_xl:Loading Spreadsheet: {cfg.xl_exec_path} - {cfg.v_chk_xls_pname}")
+        print(f"v_chk_xl:Loading Spreadsheet: {cfg.wb_exec_path} - {cfg.v_chk_xls_pname}")
         time.sleep(5)
 
-        # pid = Popen([cfg.xl_exec_path, cfg.v_chk_xls_pname]).pid
+        # pid = Popen([cfg.wb_exec_path, cfg.v_chk_xls_pname]).pid
     else:
         print(f"v_chk_xl: Error reading config in main: {cfg.v_chk_xls_pname}")
         print(f"v_chk_xl: Exiting...")

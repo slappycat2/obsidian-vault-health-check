@@ -9,14 +9,14 @@ import glob
 class Config:
     def __init__(self):
         self.c_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.cfg_num = 0
+        self.bat_num = 0
         self.chk_yaml = []
         self.dbug = False
         self.vault_path = "E:\\o2"
         self.dirs_dot = [f.name for f in os.scandir(self.vault_path) if
                          f.is_dir() and f.path.startswith(f"{self.vault_path}\\.")]
-        self.dirs_special = ["z_meta", "z_resources"]
-        self.dirs_skip = self.dirs_dot + self.dirs_special
+        self.dirs_skip_rel_str = ["z_meta", "z_resources"]
+        self.dirs_skip_abs_lst = self.dirs_dot + self.dirs_skip_rel_str
         self.dup_files = {}
         self.files = {}  # {"filename": {"links":, [list of values]...}
                      # pros {"key":    {"val":  [list of files], "val", [list of
@@ -27,13 +27,13 @@ class Config:
         self.rgx_noTZdateReplace = r"\1-\2-\3\4 \6"
         self.v_chk_cfg_pname = ""
         self.v_chk_xls_pname = ""
-        self.xl_exec_path = "C:\\Program Files\\Microsoft Office\\root\\Office16\\EXCEL.EXE"
+        self.wb_exec_path = "C:\\Program Files\\Microsoft Office\\root\\Office16\\EXCEL.EXE"
 
     def get_last_cfg(self):
 
         """Returns the name of the latest (most recent) file
         of the joined path(s)"""
-        path = "G:\\dev\\v_chk\\cfgs\\"
+        path = "G:\\dev\\v_chk\\batch_files\\"
         pattern = "v_chk_*.pickle"
         fullpath = os.path.join(path, pattern)
         list_of_files = glob.iglob(fullpath)  # You may use iglob in Python3
@@ -48,16 +48,16 @@ class Config:
 
     def get_next_cfg(self):
         c_num = 0
-        c_file = f"G:\\dev\\v_chk\\cfgs\\v_chk_{c_num:04d}.pickle"
+        c_file = f"G:\\dev\\v_chk\\batch_files\\v_chk_{c_num:04d}.pickle"
 
         while Path(c_file).exists():
             c_num += 1
-            c_file = f"G:\\dev\\v_chk\\cfgs\\v_chk_{c_num:04d}.pickle"
+            c_file = f"G:\\dev\\v_chk\\batch_files\\v_chk_{c_num:04d}.pickle"
 
-        self.cfg_num = c_num
+        self.bat_num = c_num
         self.v_chk_cfg_pname = c_file
         self.v_chk_xls_pname = \
-            f"G:\\dev\\v_chk\\xlWork\\v_chk_{self.cfg_num:04d}.xlsx"
+            f"G:\\dev\\v_chk\\workbooks\\v_chk_{self.bat_num:04d}.xlsx"
 
         print(f"v_chk_cfg: Write Next Config file: {self.v_chk_cfg_pname}")
         return 0
@@ -98,8 +98,8 @@ if __name__ == "__main__":
     print(f"cfg.v_chk_cfg_pname: {cfg.v_chk_cfg_pname}")
     print(f"cfg.v_chk_xls_pname: {cfg.v_chk_xls_pname}")
     print(f"cfg.dirs_dot: {cfg.dirs_dot}")
-    print(f"cfg.dirs_special: {cfg.dirs_special}")
-    print(f"cfg.dirs_skip: {cfg.dirs_skip}")
+    print(f"cfg.dirs_skip_rel_str: {cfg.dirs_skip_rel_str}")
+    print(f"cfg.dirs_skip_abs_lst: {cfg.dirs_skip_abs_lst}")
 
     print(f"cfg.rgx_boundary: {cfg.rgx_boundary}")
     print(f"cfg.rgx_body: {cfg.rgx_body}")
@@ -107,8 +107,8 @@ if __name__ == "__main__":
     print(f"cfg.rgx_noTZdateReplace: {cfg.rgx_noTZdateReplace}")
     print(f"cfg.v_chk_cfg_pname: {cfg.v_chk_cfg_pname}")
     print(f"cfg.v_chk_xls_pname: {cfg.v_chk_xls_pname}")
-    print(f"cfg.xl_exec_path: {cfg.xl_exec_path}")
-    print(f"cfg.cfg_num: {cfg.cfg_num}")
+    print(f"cfg.wb_exec_path: {cfg.wb_exec_path}")
+    print(f"cfg.bat_num: {cfg.bat_num}")
     print(f"cfg.dbug: {cfg.dbug}")
     print(f"cfg.vault_path: {cfg.vault_path}")
 

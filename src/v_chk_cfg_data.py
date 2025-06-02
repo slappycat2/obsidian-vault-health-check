@@ -1,8 +1,8 @@
 import glob
 import json
-from v_chk_cfg_sys import *
+from v_chk_setup import *
 
-class DataDefinition(WbConfig):
+class DataDefinition:
     """ This is a class that holds the Data Definition (the cell values, themselves)
     for a workbook as opposed to the Workbook Definition, which was supposed to hold the
     Workbook (Headings, filename, etc.) Definition, but it's all pretty much here, now.
@@ -10,12 +10,12 @@ class DataDefinition(WbConfig):
     """
     def __init__(self, sys_id, dbug_lvl=0):
         self.DBUG_LVL = dbug_lvl
-        super().__init__(self.DBUG_LVL)
+        self.cfg = SysConfig(self.DBUG_LVL).cfg
         self.sys_id = sys_id
         self.OPEN_ON_CREATE = True
         self.xls_pname = ""     # assigned below
-        self.cfg_pname = ""
-        self.cfg_num = 0
+        self.bat_pname = ""
+        self.bat_num = 0
 
         self.wb_data = {}     # NEED TO CHECK IF OK WITH v_chk
         self.wb_tabs = {}
@@ -72,7 +72,7 @@ class DataDefinition(WbConfig):
         """Returns the name of the latest (most recent) file
         of the path_pattern_lst
         requires: path_pattern_lst - a list formatted as:
-        ["G:\\dev\\v_chk\\data\\cfgs\\", "v_chk_*.yaml"]
+        ["G:\\dev\\v_chk\\data\\batch_files\\", "v_chk_*.yaml"]
         """
 
         latest_file = f"{self.cfg_dir}\\{self.cfg_sys_id}_0000.yaml"
@@ -86,16 +86,16 @@ class DataDefinition(WbConfig):
             # no files in dir (latest file is empty)
             pass
         except Exception as e:
-            raise Exception(f"ConfigData: Error reading config file ({self.cfg_pname}) Error : {e}")
+            raise Exception(f"ConfigData: Error reading config file ({self.bat_pname}) Error : {e}")
 
-        self.cfg_pname = latest_file
+        self.bat_pname = latest_file
         self.xls_pname = f"{self.xls_dir}\\{Path(latest_file).stem}.xlsx"
         if self.DBUG_LVL > 1:
-            print(f"ConfigData: Read Last Config file: {self.cfg_pname}")
+            print(f"ConfigData: Read Last Config file: {self.bat_pname}")
         # Add these to the wb_def (not the sys file!)
-        self.cfg['cfg_pname'] = self.cfg_pname
+        self.cfg['cfg_pname'] = self.bat_pname
         self.cfg['xls_pname'] = self.xls_pname
-        self.cfg['cfg_sys_pname'] = self.cfg_sys_pname
+        self.cfg['cfg_pname'] = self.cfg_pname
 
         return
 
@@ -103,25 +103,25 @@ class DataDefinition(WbConfig):
         """Returns the name of the next available yaml config file
         using the path filename stub_provided.
         requires: path_stub formatted as:
-        ["G:\\dev\\v_chk\\data\\cfgs\\"]
+        ["G:\\dev\\v_chk\\data\\batch_files\\"]
         """
-        self.cfg_num = 0
-        c_file = f"{self.cfg_dir}{self.cfg_sys_id}_{self.cfg_num:04d}.yaml"
+        self.bat_num = 0
+        c_file = f"{self.cfg_dir}{self.cfg_sys_id}_{self.bat_num:04d}.yaml"
 
         while Path(c_file).exists():
-            self.cfg_num += 1
-            c_file = f"{self.cfg_dir}{self.cfg_sys_id}_{self.cfg_num:04d}.yaml"
+            self.bat_num += 1
+            c_file = f"{self.cfg_dir}{self.cfg_sys_id}_{self.bat_num:04d}.yaml"
             if self.DBUG_LVL > 1:
                 print(f"ConfigData: Next Config file: {c_file}")
 
-        self.cfg_pname = c_file
+        self.bat_pname = c_file
         self.xls_pname = f"{self.xls_dir}{Path(c_file).stem}.xlsx"
-        self.cfg['cfg_pname'] = self.cfg_pname
+        self.cfg['cfg_pname'] = self.bat_pname
         self.cfg['xls_pname'] = self.xls_pname
-        self.cfg['cfg_num'] = self.cfg_num
+        self.cfg['bat_num'] = self.bat_num
 
         if self.DBUG_LVL > 1:
-            print(f"ConfigData: Init Next Config file: {self.cfg_pname}")
+            print(f"ConfigData: Init Next Config file: {self.bat_pname}")
 
         # Init everything except cfg, as this is a new file...
         self.tab_def = {}
@@ -169,13 +169,13 @@ class DataDefinition(WbConfig):
         return
 
     def write_cfg_data(self):
-        if not self.cfg_pname:
+        if not self.bat_pname:
             self.get_next_cfg()
 
         # self.wb_def_pack()   # This clobbers wb_data during tags! Upd explicitly!
 
         try:
-            with open(self.cfg_pname, 'w') as yaml_file:
+            with open(self.bat_pname, 'w') as yaml_file:
                 # yaml.dump(range(50), width=50, indent=4)
                 yaml.dump({
                     'wb_def':     self.wb_def
@@ -185,7 +185,7 @@ class DataDefinition(WbConfig):
             return
 
         except Exception as e:
-            print(f"ConfigData-write-wb_def ({self.cfg_pname}): Error in Save Config: {e}")
+            print(f"ConfigData-write-wb_def ({self.bat_pname}): Error in Save Config: {e}")
             sys.exit(1)
 
 
@@ -199,22 +199,22 @@ class DataDefinition(WbConfig):
         # if op_flg is not None:
         #     op_flg = op_flg.upper()
 
-        if self.cfg_pname == '' or self.cfg_sys_pname is None:
+        if self.bat_pname == '' or self.cfg_pname is None:
             self.get_last_cfg()
             if self.DBUG_LVL > 1:
-                print(f"ConfigData-read_config: Loaded last config file: {self.cfg_pname}")
+                print(f"ConfigData-read_config: Loaded last config file: {self.bat_pname}")
         else:
             if self.DBUG_LVL > 1:
-                print(f"ConfigData-read_config: Reading Config file: {self.cfg_pname}")
+                print(f"ConfigData-read_config: Reading Config file: {self.bat_pname}")
         try:
-            with open(self.cfg_pname, 'r') as file_y:
+            with open(self.bat_pname, 'r') as file_y:
                 cfg_data = file_y.read()
 
             wb_def_temp = yaml.safe_load(cfg_data)
             wb_def_temp = wb_def_temp.get('wb_def', {})
 
         except Exception as e:
-            raise Exception(f"ConfigData: Error reading config file ({self.cfg_pname}) Error : {e}")
+            raise Exception(f"ConfigData: Error reading config file ({self.bat_pname}) Error : {e}")
 
         return wb_def_temp
 

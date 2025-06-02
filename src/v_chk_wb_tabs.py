@@ -1,6 +1,6 @@
 from openpyxl.styles import Side
 import copy
-from v_chk_cfg_data import *
+from v_chk_wb_setup import *
 from v_chk_class_lib import Colors
 
 class NewWb(WbDataDef):
@@ -8,10 +8,11 @@ class NewWb(WbDataDef):
         self.DBUG_LVL = dbug_lvl
         self.tab_id = 'init'
         super().__init__(self.DBUG_LVL)
-        self.wb_def = self.read_cfg_data()
+        self.wb_def = self.read_bat_data()
         self.wb_tabs = self.wb_def['wb_tabs']
         self.tab_def = {}
         self.ctot = self.wb_def['cfg']['ctot']
+        self.Colors = Colors()
 
         if self.DBUG_LVL >= 0:
             print("Loading Workbook Tab Definitions...")
@@ -368,7 +369,7 @@ class NewWb(WbDataDef):
             if tab_id_key != 'init':
                 self.wb_def['wb_tabs'][tab_id_key] = self.tab_def_obj.tab_def
 
-        self.write_cfg_data()
+        self.write_bat_data()
 
 class NewTab:
     def __init__(self, tab_id, wb_obj):
@@ -752,7 +753,7 @@ class DefVals(NewTab):
             # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
             # totals headers (across and down)
             'Notes-hdr':      [ 3, 11, '', sz, 0, txt1, clr1, True, False, 'left', 'Notes: ']
-          , 'x-null-values':  [11,  8, '', 12, 0, self.colors.clr_red,  "", True, True,   'left',   self.f_null_values]
+          , 'x-null-values':  [ 5,  8, '', 12, 0, self.colors.clr_red,  "", True, True,   'left',   self.f_null_values]
           , 'x-filters-on':   [ 5,  6, '', 12, 0, self.colors.clr_red,  "", True, True,   'left',   self.f_filters_on]
           # This one is for the IVisible Column, not the totals
           , 'isVisible':      [44, 0, '', sz, 0, clr2, clr2, False, False, 'right',  self.f_isVisible]
@@ -841,6 +842,7 @@ class DefFile(NewTab):
         # clr2 = secondary "highlights" color, headings
         # clr1 = fill color on cells that use color fills
         # txt1 = text color on cells that use color fills
+        red0 = self.colors.get_clr('red', 0)
 
         sz = self.tab_txt_sz
 
@@ -878,15 +880,15 @@ class DefFile(NewTab):
            }
         self.tab_def['tab_cd_table_dtl'] =  {
             # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
-             "RowId":     [10,  0, '', sz, 0, "", "", False, False, 'center', '']
-           , "filenm":    [11,  0, '', sz, 0, "", "", True, False,  'left', '']
-           , "spacer":    [12,  0, '', sz, 0, "", "", True, False,  'left', '']
-           , "location":  [13,  0, '', sz, 0, "", "", False, False, 'center', '']
-           , "prop-lc":   [14,  0, '', sz, 0, "", "", False, False, 'left', '']
-           , "prop-ac":   [15,  0, '', sz, 0, "", "", False, False, 'left', '']
-           , "val-cnt":   [16,  0, '', sz, 0, "", "", False, False, 'center', '']
-           , "val":       [17,  0, '', sz, 0, "", "", False, False, 'left', '']
-           , 'isVisible': [18,  0, '',  8, 0, "", "", False, False, 'right',  self.f_isVisible]
+             "RowId":     [10,  0, '', sz, 0, "", "",   False, False, 'center', '']
+           , "filenm":    [11,  0, '', sz, 0, "", "",   True, False,  'left', '']
+           , "spacer":    [12,  0, '', sz, 0, "", "",   True, False,  'left', '']
+           , "inline":    [13,  0, '', sz, 0, "", "",   False, False, 'center', '']
+           , "property":  [14,  0, '', sz, 0, "", "",   False, False, 'left', '']
+           , "casediff":  [15,  0, '', sz, 0, red0, "", False, True,  'left', '']
+           , "val-cnt":   [16,  0, '', sz, 0, "", "",   False, False, 'center', '']
+           , "val":       [17,  0, '', sz, 0, "", "",   False, False, 'left', '']
+           , 'isVisible': [18,  0, '',  8, 0, "", "",   False, False, 'right',  self.f_isVisible]
            }
         self.tab_def['tab_cd_table_links']     = [ 9, 0, '', sz, 18, txt1, clr1, False, False, 'left'  , '']
         self.tab_def['tab_cd_table_spacer'] = [10, 0, '', sz,  1, txt1, clr1, False, False, 'right'  , '']
@@ -1591,6 +1593,8 @@ class DefAr51(NewTab):
         self.tab_def['tab_options'] = {
             "FullPath", True
         }
+        # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
+        self.tab_def['cfg-dump'] = [4, 2, '', sz, 20, "", "", False, False, 'left', '']
 
         self.tab_def['tab_cd_fixed_grid']   = {  # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
             # totals headers (across and down)
@@ -1603,7 +1607,7 @@ class DefAr51(NewTab):
             , 'Ctrl Counts':  [1, 37, '', 14, 0,   '', sea2, True, False, 'left', 'Control Counts from v_chk']
             , 'f-tot-00':     [1, 38, '', 12, 0,   '', '', False, False, 'left', 'Total MD Files in Vault']
             , 'x-tot-00':     [0,  0, '', 12, 0,   '', '', False, False, 'right', ctot[0]]
-            , 'f-tot-01':     [1, 39, '', 12, 0,   '', '', False, False, 'left', 'Markdown Files in dirs_skip']
+            , 'f-tot-01':     [1, 39, '', 12, 0,   '', '', False, False, 'left', 'Markdown Files in dirs_skip_abs_lst']
             , 'x-tot-01':     [0,  0, '', 12, 0,   '', '', False, False, 'right', ctot[1]]
             , 'f-tot-02':     [1, 40, '', 12, 0,   '', '', False, False, 'left', 'Templates Processed']
             , 'x-tot-02':     [0,  0, '', 12, 0,   '', '', False, False, 'right', ctot[2]]
