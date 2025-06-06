@@ -6,7 +6,7 @@ import copy
 import re
 
 import openpyxl
-
+from openpyxl.formatting.rule import CellIsRule  # , ColorScaleRule, FormulaRule
 
 from openpyxl.styles import Alignment, Font, Border, Side, PatternFill
 from openpyxl.worksheet import cell_range
@@ -15,7 +15,6 @@ from openpyxl.drawing.image import Image
 from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
 
 from v_chk_wb_setup import *
-# from v_chk_xl_tabs import *
 from v_chk_class_lib import *
 
 
@@ -141,6 +140,7 @@ class ExcelExporter:
         self.pn_batch = self.cfg['pn_cfg']
         self.bat_num = self.cfg['bat_num']
         self.pn_wb_exec = self.cfg['pn_wb_exec']
+
         self.wb_data = self.wb_def.get('wb_data', {})
         self.obs_props = self.wb_data.get('obs_props', {})
         self.obs_atags = self.wb_data.get('obs_atags', {})
@@ -199,6 +199,7 @@ class ExcelExporter:
     def export_area51(self, wb_obj, wb):
         tab_id = 'ar51'
         tab = self.wb_tabs_open[tab_id]
+        err_txt = self.colors.err_txt
 
         tab_def = wb_obj.wb_def['wb_tabs'][tab_id]
 
@@ -248,6 +249,16 @@ class ExcelExporter:
             cfg_cd_def[0] = col_sav
             row_idx += 1
 
+        # ========================================================================
+        # export borders
+        # ========================================================================
+        if 'borders' in self.tab_def:
+            for _, brdr_parms in self.tab_def['borders'].items():
+                # 'footer':["C30:J30", "thin", self.colors.clr_blk]
+                self.xl_set_border(tab, brdr_parms)
+
+        tab.conditional_formatting.add('E21:E28', CellIsRule(
+            operator='notEqual', formula=['0'], stopIfTrue=False, font=Font(color=err_txt, bold=True, italic=True)))
 
     def export_tab(self, wb):
         tab_id = self.tab_def['tab_id']
@@ -379,6 +390,7 @@ class ExcelExporter:
                 elif tab_id == "xyml":
                     vals = [int((row_idx - tbl_hdr_row))
                             , self.obs_hyperlink(Path(value_item).name)
+                            , '=IFERROR(IF(VLOOKUP(tbl_xyml[Notes],tbl_file[Notes],1,FALSE)=tbl_xyml[Notes],TRUE,FALSE),"")'
                             , self.xyml_descs[prop_name][0]
                             ]
                 elif tab_id == "file":
@@ -544,7 +556,7 @@ class ExcelExporter:
 
         last_row = row_idx
         # ===========================================================================================
-        # FIXED CELLS-These are non-table items that w/"fixed" cell positions on the worksheet (grid)
+        # FIXED CELLS (grid)-These are non-table items that w/"fixed" cell positions on the worksheet
         # ===========================================================================================
 
         vis_key = 'isVisible'
@@ -656,7 +668,7 @@ class ExcelExporter:
 
         if col_idx == 0:
             col_idx = self.next_cell_col
-            print(f"    row_idx: {row_idx}  col_idx: {col_idx}  val:{val}")
+            # print(f"    row_idx: {row_idx}  col_idx: {col_idx}  val:{val}")
 
         if c_sz is None or c_sz == 0:
             c_sz = 10

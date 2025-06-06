@@ -35,11 +35,12 @@ class SysConfig:
                        , 'ar51'
         ]
 
+
         self.dirs_dot       = []
         self.dirs_skip_rel_str    = ""
         self.dirs_skip_abs_lst      = []
         self.dir_templates        = ""
-        self.ctot           = [0] * 10
+        self.ctot           = [0] * 13
 
         self.pn_batch = ""
         self.pn_wbs = ""
@@ -53,8 +54,8 @@ class SysConfig:
         self.bool_unused_2  = False
         self.bool_unused_3  = False
 
-        self.max_links_vals = 0  # Values Tab Maximum Links
-        self.max_links_tags = 0  # Tags Tab Maximum Links
+        self.link_lim_vals = 0  # Values Tab Maximum Links
+        self.link_lim_tags = 0  # Tags Tab Maximum Links
 
         self.cfg = {}
 
@@ -154,22 +155,22 @@ class SysConfig:
 
         self.cfg = {
               'vault_id':           self.vault_id
-            , 'dir_vault':         self.dir_vault
-            , 'pn_wb_exec':       self.pn_wb_exec
+            , 'dir_vault':          self.dir_vault
+            , 'pn_wb_exec':         self.pn_wb_exec
             , 'cfg_sys_id':         self.cfg_sys_id
             , 'cfg_sys_ver':        self.cfg_sys_ver
             , 'c_date':             self.c_date
-            , 'dir_batch':            self.dir_batch
+            , 'dir_batch':          self.dir_batch
             , 'dir_wbs':            self.dir_wbs
-            , 'dir_templates':            self.dir_templates
+            , 'dir_templates':      self.dir_templates
             , 'tab_seq':            self.tab_seq
             , 'ctot':               self.ctot
             , 'dirs_dot':           self.dirs_dot
             , 'dirs_skip_rel_str':  self.dirs_skip_rel_str
             , 'dirs_skip_abs_lst':  self.dirs_skip_abs_lst
-            , 'pn_batch':          self.pn_batch
-            , 'pn_wbs':          self.pn_wbs
-            , 'pn_cfg':          self.pn_cfg
+            , 'pn_batch':           self.pn_batch
+            , 'pn_wbs':             self.pn_wbs
+            , 'pn_cfg':             self.pn_cfg
             , 'bat_num':            self.bat_num
             , 'bool_shw_notes':     self.bool_shw_notes
             , 'bool_rel_paths':     self.bool_rel_paths
@@ -177,8 +178,8 @@ class SysConfig:
             , 'bool_unused_1':      self.bool_unused_1
             , 'bool_unused_2':      self.bool_unused_2
             , 'bool_unused_3':      self.bool_unused_3
-            , 'max_links_vals': self.max_links_vals
-            , 'max_links_tags': self.max_links_tags
+            , 'link_lim_vals':      self.link_lim_vals
+            , 'link_lim_tags':      self.link_lim_tags
         }
 
     def cfg_unpack(self):
@@ -206,8 +207,8 @@ class SysConfig:
         self.bool_unused_1      = self.cfg.get('bool_unused_1', True)
         self.bool_unused_2      = self.cfg.get('bool_unused_2', True)
         self.bool_unused_3      = self.cfg.get('bool_unused_3', True)
-        self.max_links_vals = self.cfg.get('max_links_vals', 0)
-        self.max_links_tags = self.cfg.get('max_links_tags', 0)
+        self.link_lim_vals = self.cfg.get('link_lim_vals', 0)
+        self.link_lim_tags = self.cfg.get('link_lim_tags', 0)
 
     def validate_vault_id(self, vault_id):
         """Validate Obsidian Vault ID"""
@@ -353,8 +354,8 @@ class SysConfig:
             self.bool_unused_3  = self.bool_unused_3_var.get()
 
             try:
-                self.max_links_vals = int(self.max_links_vals_var.get())
-                self.max_links_tags = int(self.max_links_tags_var.get())
+                self.link_lim_vals = int(self.link_lim_vals_var.get())
+                self.link_lim_tags = int(self.link_lim_tags_var.get())
             except ValueError:
                 messagebox.showerror("Error", "Maximum links values must be valid numbers")
                 return
@@ -511,35 +512,35 @@ class SysConfig:
 
         # Values Tab Maximum Links
         ttk.Label(links_frame, text="Values Tab Maximum Links:").grid(row=0, column=0, sticky=tk.W, pady=5, padx=(0, 10))
-        self.max_links_vals_var = tk.StringVar(value=str(self.max_links_vals))
-        vals_spinbox = ttk.Spinbox(links_frame, from_=0, to=16300, textvariable=self.max_links_vals_var, width=10)
+        self.link_lim_vals_var = tk.StringVar(value=str(self.link_lim_vals))
+        vals_spinbox = ttk.Spinbox(links_frame, from_=0, to=16300, textvariable=self.link_lim_vals_var, width=10)
         vals_spinbox.grid(row=0, column=1, sticky=tk.W, pady=5)
-        self.max_links_vals_label = ttk.Label(links_frame, text="Unlimited" if self.max_links_vals == 0 else str(self.max_links_vals))
-        self.max_links_vals_label.grid(row=0, column=2, sticky=tk.W, pady=5, padx=10)
+        self.link_lim_vals_label = ttk.Label(links_frame, text="Unlimited" if self.link_lim_vals == 0 else str(self.link_lim_vals))
+        self.link_lim_vals_label.grid(row=0, column=2, sticky=tk.W, pady=5, padx=10)
 
         # Tags Tab Maximum Links
         ttk.Label(links_frame, text="Tags Tab Maximum Links:").grid(row=1, column=0, sticky=tk.W, pady=5, padx=(0, 10))
-        self.max_links_tags_var = tk.StringVar(value=str(self.max_links_tags))
-        tags_spinbox = ttk.Spinbox(links_frame, from_=0, to=16300, textvariable=self.max_links_tags_var, width=10)
+        self.link_lim_tags_var = tk.StringVar(value=str(self.link_lim_tags))
+        tags_spinbox = ttk.Spinbox(links_frame, from_=0, to=16300, textvariable=self.link_lim_tags_var, width=10)
         tags_spinbox.grid(row=1, column=1, sticky=tk.W, pady=5)
-        self.max_links_tags_label = ttk.Label(links_frame, text="Unlimited" if self.max_links_tags == 0 else str(self.max_links_tags))
-        self.max_links_tags_label.grid(row=1, column=2, sticky=tk.W, pady=5, padx=10)
+        self.link_lim_tags_label = ttk.Label(links_frame, text="Unlimited" if self.link_lim_tags == 0 else str(self.link_lim_tags))
+        self.link_lim_tags_label.grid(row=1, column=2, sticky=tk.W, pady=5, padx=10)
 
         def update_links_label(*args):
             try:
-                vals = int(self.max_links_vals_var.get())
-                self.max_links_vals_label.config(text="Unlimited" if vals == 0 else str(vals))
+                vals = int(self.link_lim_vals_var.get())
+                self.link_lim_vals_label.config(text="Unlimited" if vals == 0 else str(vals))
             except ValueError:
-                self.max_links_vals_label.config(text="Invalid")
+                self.link_lim_vals_label.config(text="Invalid")
 
             try:
-                tags = int(self.max_links_tags_var.get())
-                self.max_links_tags_label.config(text="Unlimited" if tags == 0 else str(tags))
+                tags = int(self.link_lim_tags_var.get())
+                self.link_lim_tags_label.config(text="Unlimited" if tags == 0 else str(tags))
             except ValueError:
-                self.max_links_tags_label.config(text="Invalid")
+                self.link_lim_tags_label.config(text="Invalid")
 
-        self.max_links_vals_var.trace('w', update_links_label)
-        self.max_links_tags_var.trace('w', update_links_label)
+        self.link_lim_vals_var.trace('w', update_links_label)
+        self.link_lim_tags_var.trace('w', update_links_label)
 
         row += 1
 

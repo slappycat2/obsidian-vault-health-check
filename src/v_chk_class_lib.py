@@ -52,6 +52,7 @@ class Colors:
         self.base_clr = None        # if needed, when doing shade lookups
         self.table_styles = []
         self.row_clr_idx = {}
+        self.err_txt = '00FF0000'   # bright red for error text
         self.clr1 = None
         self.clr2 = None
         self.txt1 = None

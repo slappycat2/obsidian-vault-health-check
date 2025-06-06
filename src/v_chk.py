@@ -55,7 +55,7 @@ class VaultHealthCheck:   # WbConfig
         self.inline = "F"
         self.actual_prop_key = ""
         self.plugin_id = ""
-        self.ctot = [0] * 10
+        self.ctot = [0] * 13
 
         plugin_lib = PluginMan(self.cfg['dir_vault'])
         self.obs_plugs = plugin_lib.get_obs_plugs()
@@ -96,11 +96,10 @@ class VaultHealthCheck:   # WbConfig
                 print(f"Skipping file: {md_file} is in dirs_skip_rel_str")
                 continue # this gets the next file...
 
-
-            md_pname = str(md_file)
-
             if self.DBUG_LVL > 2:
                 print(f"Processing file: {md_file}")
+
+            md_pname = str(md_file)
             self.process_md_file(md_pname)
 
         # Vault Processing Complete! Write to wb_def
@@ -113,7 +112,12 @@ class VaultHealthCheck:   # WbConfig
         self.wb_def['wb_data']['obs_codes'] = self.obs_codes
         self.wb_def['wb_data']['obs_nests'] = self.obs_nests
         self.wb_def['wb_data']['obs_plugs'] = self.obs_plugs
+
+        self.ctot[11] = self.get_max_links(self.obs_props)
+        self.ctot[12] = self.get_max_links(self.obs_atags)
+
         self.cfg['ctot'] = self.ctot
+
         # Vault processing complete! Get wb tab defs,
         self.wb_data_obj.write_bat_data()
 
@@ -140,8 +144,13 @@ class VaultHealthCheck:   # WbConfig
 
         content = self.rgx_code_blocks.sub('', full_content)
         content = self.strip_inline_code(content)
+        content = self.strip_templater_strs(content)
 
         y_text, x_text = self.split_file(content)
+        if len(y_text) == 0 and len(x_text) == 0:
+            self.ctot[10] += 1
+            self.upd_obs_props(self.obs_xyaml, 'NoFm', self.filepath, self.filepath)
+
         if len(y_text) != 0:
             self.plugin_id = ''.join([pid for pid in self.plugin_id_def if pid in y_text])
             if self.plugin_id == "NestedDictionary":  # YAML with the word NestedDictionary is okay!
@@ -454,10 +463,20 @@ class VaultHealthCheck:   # WbConfig
     def is_subdirectory(child, parent):
         return parent in child.parents
 
+    @staticmethod
+    def  get_max_links(obs_dict):
+        pmax = 0
+        for key1, val1 in obs_dict.items():
+            for key2, val2 in val1.items():
+                if pmax < len(val2):
+                    pmax = len(val2)
+
+        return pmax
+
 if __name__ == "__main__":
         # v_wb = WbDataDef()
         # t_wb = NewWb()
-    DBUG_LVL = 9
+    DBUG_LVL = 0
         # self.DBUG_LVL = 0  # Do Not print anything
         # self.DBUG_LVL = 1  # print report level actions only (export, load, save, etc.) + all lower levels
         # self.DBUG_LVL = 2  # print object level actions + all lower levels

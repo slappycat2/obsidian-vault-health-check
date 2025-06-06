@@ -11,7 +11,8 @@ class NewWb(WbDataDef):
         self.wb_def = self.read_bat_data()
         self.wb_tabs = self.wb_def['wb_tabs']
         self.tab_def = {}
-        self.ctot = self.wb_def['cfg']['ctot']
+        self.cfg = self.wb_def['cfg']
+        self.ctot = self.cfg['ctot']
         self.Colors = Colors()
 
         if self.DBUG_LVL >= 0:
@@ -28,7 +29,7 @@ class NewWb(WbDataDef):
                 , 'col_key2': ""
                 , 'col_val1': "Values"
                 , 'col_val2': ""
-                , 'col_lnks': "Files"
+                , 'col_lnks': "Links"
                 , 'help_txt': {
                       'subtitle1': [
                           'Lists all properties and tags found in an Obsidian vault, with '
@@ -67,7 +68,7 @@ class NewWb(WbDataDef):
                     , 'col_key2': ""
                     , 'col_val1': "Values"
                     , 'col_val2': ""
-                    , 'col_lnks': "Files"
+                    , 'col_lnks': "Links"
                     , 'help_txt': {
                           'subtitle': [
                             'All Vault Properties with counts of values and note files.'
@@ -89,7 +90,7 @@ class NewWb(WbDataDef):
                 , 'col_key2': ""
                 , 'col_val1': "Values"
                 , 'col_val2': ""
-                , 'col_lnks': "Files"   # NB: This column title may be referenced in the tab_notes, below!
+                , 'col_lnks': "Links"   # NB: This column title may be referenced in the tab_notes, below!
                 , 'help_txt': {
                       'subtitle': [
                         'All Vault Properties and Values with links to their Notes'
@@ -99,7 +100,7 @@ class NewWb(WbDataDef):
                       , ' - You can use Table Heading Filters to look at specific items.'
                       , '      When filters are applied, tab totals will reflect the filtered data and'
                       , '      a warning will display next to the tab Totals Section'
-                      , ' - The "Files" column reflects the total number of links found in all markdown files.'
+                      , ' - The "Links" column reflects the total number of links found in all markdown files.'
                       , '   If the columns-maximum is reached, this number will be more than what is displayed.'
                       , ' - All Properties are listed in lowercase, as that is how Obsidian sees them.'
                       , '     The "Files" Tab shows them as entered, if lowercase was not used.'
@@ -118,7 +119,7 @@ class NewWb(WbDataDef):
                     , 'col_key2': ""
                     , 'col_val1': ""
                     , 'col_val2': ""
-                    , 'col_lnks': "Notes"
+                    , 'col_lnks': "Links"
                     , 'help_txt': {
                           'subtitle': [
                             'All tags found in all markdown files.'
@@ -145,6 +146,8 @@ class NewWb(WbDataDef):
                         ]
                         , 'notes': [
                             'All tags found in frontmatter and in-line, in all vault markdown files.'
+                          , 'Note that "tags" are considered as "Properties" in this report, and the'
+                          , 'actual tags themselves will appear in the "Values" column.'
                         ]
                     }
                     , 'data_src': ['obs_files']
@@ -156,8 +159,8 @@ class NewWb(WbDataDef):
                     , 'hdr_clrs': True  #  True=Force Tab Colors; False=Use TableStyle Colors
                     , 'col_key1': "Notes"
                     , 'col_key2': ""
-                    , 'col_val1': "Likely Issue"
-                    , 'col_val2': ""
+                    , 'col_val1': "InFiles"
+                    , 'col_val2': "Likely Issue"
                     , 'col_lnks': ""
                         # Possible errors needing more detail...
                         # These are defined above...
@@ -184,11 +187,11 @@ class NewWb(WbDataDef):
                     , 'shw_grid': False
                     , 'tab_titl': 'Duplicate Files in Vault'
                     , 'hdr_clrs': True  #  True=Force Tab Colors; False=Use TableStyle Colors
-                    , 'col_key1': "Notes"
+                    , 'col_key1': "Duplicate Notes"
                     , 'col_key2': ""
-                    , 'col_val1': "Dups Found"
+                    , 'col_val1': ""
                     , 'col_val2': ""
-                    , 'col_lnks': "Duplicate Notes"
+                    , 'col_lnks': "Links"
                     , 'help_txt': {
                           'subtitle': [
                              'Duplicates here are defined as vault files that have identical filenames,'
@@ -298,7 +301,7 @@ class NewWb(WbDataDef):
                     , 'col_key2': ""
                     , 'col_val1': "Values"
                     , 'col_val2': ""
-                    , 'col_lnks': "Files"
+                    , 'col_lnks': "Links"
                     , 'help_txt': {
                           'subtitle': []
                         , 'notes': []
@@ -314,7 +317,7 @@ class NewWb(WbDataDef):
                 , 'col_key2': ""
                 , 'col_val1': "Values"
                 , 'col_val2': ""
-                , 'col_lnks': "Files"
+                , 'col_lnks': "Links"
                 , 'help_txt': {
                       'subtitle': []
                     , 'notes': []
@@ -374,6 +377,7 @@ class NewWb(WbDataDef):
 class NewTab:
     def __init__(self, tab_id, wb_obj):
         self.tab_id = tab_id
+        cfg = wb_obj.cfg
         # self.tab_common = tab_common
 
         self.tab_name       = wb_obj.tab_common[tab_id]['tab_name']
@@ -388,6 +392,13 @@ class NewTab:
         self.showGridLines  = wb_obj.tab_common[tab_id]['shw_grid']
         self.xyml_descs     = wb_obj.xyml_descs
 
+        ctot = cfg.get('ctot', [0] * 13)
+
+        self.link_max_vals   = ctot[11]
+        self.link_max_tags   = ctot[12]
+        self.link_lim_vals = cfg.get('link_lim_vals', 0)
+        self.link_lim_tags = cfg.get('link_lim_tags', 0)
+
         # Todo: Standardize usage of 'self.col_val2 = "ValCount"'
         self.col_val2 = "CaseDiff"
 
@@ -395,8 +406,13 @@ class NewTab:
         self.colors = wb_obj.Colors
          # self.tab_clrs = TabColorsDef()
 
+        # Border Styles must be one of {'medium', 'mediumDashDotDot', 'hair', 'thin',
+        # 'dashed', 'double', 'slantDashDot', 'dashDotDot', 'dashDot', 'dotted',
+        # 'mediumDashDot', 'thick', 'mediumDashed'}
+
         self.bdr_thick = Side(border_style="thick", color='000000')
         self.bdr_thin = Side(border_style="thin", color='000000')
+        self.bdr_double = Side(border_style="double", color='000000')
 
         self.hdr_PVI = "P-V Index"
         self.hdr_IsVis = "IsVisible"
@@ -435,10 +451,10 @@ class NewTab:
         self.f_txt_key1   = f'=_xlfn.AGGREGATE(3,3,{self.tbl_name}[{self.col_key1}])'
         self.f_txt_key2   = f'=_xlfn.AGGREGATE(3,3,{self.tbl_name}[{self.col_key2}])'
         self.f_txt_val1   = f'=_xlfn.AGGREGATE(3,3,{self.tbl_name}[{self.col_val1}])'
-        self.f_txt_val2   = f'=_xlfn.AGGREGATE(3,3,{self.tbl_name}[{self.col_val1}])'
+        self.f_txt_val2   = f'=_xlfn.AGGREGATE(3,3,{self.tbl_name}[{self.col_val2}])'
         self.f_txt_lnks   = f'=_xlfn.AGGREGATE(3,3,{self.tbl_name}[{self.col_lnks}])'
         self.f_cif_left   = f'=COUNTIF({self.tbl_name}[{self.col_val1}],INDIRECT(ADDRESS(ROW(),COLUMN()-1,4)))'
-        self.f_cif_true   = f'=COUNTIF({self.tbl_name}[{self.col_val1}],True)'
+        self.f_cif_val1_true   = f'=COUNTIF({self.tbl_name}[{self.col_val1}],True)'
 
 
         self.f_null_values = f'=IFERROR(IF(_xlfn.AGGREGATE(3,3,{self.tbl_name}[{self.col_val1}])<>SUM({self.tbl_name}[{self.hdr_IsVis}]),"{self.f_warn_null}",""),"")'
@@ -505,7 +521,12 @@ class NewTab:
     def tab_def_post(self):
         self.calc_col_pointers()
         self.files_cols_def()
-
+        
+    def get_links_cols(self, limit, max):
+        if limit == 0:
+            return max
+        return min(limit, max)
+        
     def files_cols_def(self):
         # If there are add`l columns for Files "Where used", add them to the tab_def
         if self.tab_id and self.tab_def['tab_table_links_cols'] > 0:
@@ -535,9 +556,11 @@ class NewTab:
         :return: None; tab_def is updated with the calculated values.
         """
         first_col_list = []
+        link_cols = self.tab_def['tab_table_links_cols']
         spcr_cols = 0
+
         if self.tab_def['tab_table_link_spcrs']:
-            spcr_cols = self.tab_def['tab_table_links_cols']
+            spcr_cols = link_cols
 
         col_num = 0
         for k, v in self.tab_def['tab_cd_table_hdr'].items():
@@ -549,14 +572,15 @@ class NewTab:
 
         self.tab_def['tbl_beg_col'] = min(first_col_list)
         self.tab_def['tbl_fix_cols'] = len(self.tab_def['tab_cd_table_hdr'])
-        self.tab_def['tbl_end_col'] = ((self.tab_def['tab_table_links_cols'] + spcr_cols)
+        self.tab_def['tbl_end_col'] = ((link_cols + spcr_cols)
             + (self.tab_def['tbl_fix_cols'] - 1)
             + (self.tab_def['tbl_beg_col']))
         if self.tab_def['tbl_end_col'] < self.tab_def['tab_tots_isVisible_col']:
             self.tab_def['tbl_end_col'] = self.tab_def['tab_tots_isVisible_col']
 
         if self.tab_def['tab_has_isVisible_col']:
-            self.tab_def['tab_tots_isVisible_col'] = int(self.tab_def['tbl_end_col'])    #  38
+            self.tab_def['tab_tots_isVisible_col'] = int(self.tab_def['tbl_end_col'])
+            self.tab_def['tab_cd_fixed_grid']['isVisible'][0] = self.tab_def['tbl_end_col']
 
     def set_table_links(self, tab_cd_table_hdr, tab_cd_table_dtl):
         tab_table_links_hdr     = self.tab_def['tab_cd_table_links']
@@ -652,7 +676,7 @@ class DefPros(NewTab):
               'summ-title':  [3, 5, '', 14, 21, txt1, clr1, True, False, 'left', 'Analysis']
             , 'Totals':      [0, 0, '', sz, 15, txt1, clr1, True, False, 'center', 'Totals']
             , 'Rows':        [3, 6, '', sz,  0, txt2, clr2, True, False, 'right', 'Rows']
-            , 'x-uniq-key1': [0, 0, '', sz,  0, "", "", False, False, 'center', self.f_txt_rows]
+            , 'x-uniq-rows': [0, 0, '', sz,  0, "", "", False, False, 'center', self.f_txt_rows]
             , 'Prop':        [3, 7, '', sz,  0, txt2, clr2, True, False, 'right', self.col_key1]
             , 'x-ctot-key1': [0, 0, '', sz,  0, "", "", False, False, 'center', self.f_txt_key1]
             , 'Val':         [3, 8, '', sz,  0, txt2, clr2, True, False, 'right', self.col_val1]
@@ -704,17 +728,21 @@ class DefVals(NewTab):
         self.tab_def['tab_txt_sz'] = sz
         self.tab_def['showGridLines'] = self.showGridLines
 
+        max_vals = self.link_max_vals
+        lim_vals = self.link_lim_vals
+        links_cols = self.get_links_cols(lim_vals, max_vals)
+        self.tab_def['tab_table_links_cols'] = links_cols
+
         self.tab_def['hdr_links_pfx'] = "File"
-        self.tab_def['tab_table_links_cols'] = 15
         self.tab_def['tab_has_isVisible_col'] = True
-        self.tab_def['tab_tots_isVisible_col'] = 44
+        # self.tab_def['tab_tots_isVisible_col'] = 44
 
         # if self.tab_def['tab_name'] != 'Properties':
         #     raise WorkbookDefinitionError(f"Tab_Def: pros-tab_name tab name not defined.")
         # self.tab_def['tab_name'] = 'Properties'
-        self.tab_def['tab_cd_title_def']       = [ 3,  2, 'Berlin Sans FB Demi', 24, 0, clr1, '', True, False, 'left',self.tab_title]
-        self.tab_def['tab_cd_subtitle_def']    = [ 3,  3, '', sz, 0, '', '', False,  False, 'left', '']
-        self.tab_def['tab_cd_notes_def']       = [ 3, 12, '', sz, 0, '', '', False,  False, 'left', '']
+        self.tab_def['tab_cd_title_def'] = [ 3,  2, 'Berlin Sans FB Demi', 24, 0, clr1, '', True, False, 'left',self.tab_title]
+        self.tab_def['tab_cd_subtitle_def'] = [ 3,  3, '', sz, 0, '', '', False,  False, 'left', '']
+        self.tab_def['tab_cd_notes_def']    = [ 3, 12, '', sz, 0, '', '', False,  False, 'left', '']
         self.tab_def['tab_help_txt'] = self.help_txt
 
         self.tab_def['tab_cd_table_hdr'] = {
@@ -741,7 +769,7 @@ class DefVals(NewTab):
              'summ-title':    [ 3, 5, '', 14, 21, txt1, clr1, True,  False, 'left',    'Analysis']
           ,  'Totals':        [ 0, 0, '', sz, 15, txt1, clr1, True,  False, 'center',  'Totals']
           ,  'Rows':          [ 3, 6, '', sz, 0, txt2, clr2, True,  False, 'right',  "Rows"]
-          ,  'x-uniq-key1':   [ 0, 0, '', sz, 0, "",     "", False, False, 'center', self.f_txt_rows]
+          ,  'x-uniq-rows':   [ 0, 0, '', sz, 0, "",     "", False, False, 'center', self.f_txt_rows]
           ,  'Prop':          [ 3, 7, '', sz, 0, txt2, clr2,  True,  False, 'right', self.col_key1]
           ,  'x-ctot-key1':   [ 0, 0, '', sz, 0, "",     "",  False, False, 'center', self.f_uniq_key1]
           ,  'Values':        [ 3, 8, '', sz, 0, txt2, clr2,  True,  False, 'right', self.col_val1]
@@ -756,7 +784,8 @@ class DefVals(NewTab):
           , 'x-null-values':  [ 5,  8, '', 12, 0, self.colors.clr_red,  "", True, True,   'left',   self.f_null_values]
           , 'x-filters-on':   [ 5,  6, '', 12, 0, self.colors.clr_red,  "", True, True,   'left',   self.f_filters_on]
           # This one is for the IVisible Column, not the totals
-          , 'isVisible':      [44, 0, '', sz, 0, clr2, clr2, False, False, 'right',  self.f_isVisible]
+          # The 'isVisible' column, below, is set in calc_col_pointers()
+          , 'isVisible':      [0, 0, '', sz, 0, clr2, clr2, False, False, 'right',  self.f_isVisible]
           }
 
         self.tab_def_post()
@@ -782,14 +811,18 @@ class DefTags(NewTab):
         self.tab_def['tab_color'] = clr1
 
         self.tab_def['tab_table_link_spcrs'] = True  # Always, TRUE for now
-
-        self.tab_def['tab_has_isVisible_col'] = True
-        self.tab_def['tab_tots_isVisible_col'] = 32
-
+        self.tab_def['tab_txt_sz'] = sz
         self.tab_def['showGridLines'] = self.showGridLines
 
+        max_tags = self.link_max_tags
+        lim_tags = self.link_lim_tags
+        links_cols = self.get_links_cols(lim_tags, max_tags)
+        self.tab_def['tab_table_links_cols'] = links_cols
+
         self.tab_def['hdr_links_pfx'] = "File"
-        self.tab_def['tab_table_links_cols']    = 10
+        self.tab_def['tab_has_isVisible_col'] = True
+        # self.tab_def['tab_tots_isVisible_col'] = 32
+        # self.tab_def['tab_table_links_cols'] = 10
 
         # self.tab_def['tab_name'] = 'Tags'
         self.tab_def['tab_cd_title_def']    = [3,  2, 'Berlin Sans FB Demi', 24, 0, clr1, '', True, False, 'left', self.tab_title]
@@ -814,7 +847,7 @@ class DefTags(NewTab):
             'summ-title':       [3, 5, '', 14, 21, txt1, clr1, True, False, 'left', 'Analysis']
             , 'Totals':       [0, 0, '', sz, 15, txt1, clr1, True, False, 'center', 'Totals']
             , 'Rows':         [3, 6, '', sz, 0, txt2, clr2,  True, False, 'right',   "Rows"]
-            , 'x-uniq-key1':  [0, 0, '', sz, 0, "", "",      False, False, 'center', self.f_txt_rows]
+            , 'x-uniq-rows':  [0, 0, '', sz, 0, "", "",      False, False, 'center', self.f_txt_rows]
             , 'Tags':         [3, 7, '', sz, 0, txt2, clr2,  True, False, 'right', self.col_key1]
             , 'x-ctot-key1':  [0, 0, '', sz, 0, "", "",      False, False, 'center', self.f_txt_key1]
             , 'Files':        [3, 8, '', sz, 0, txt2, clr2,  True, False, 'right', self.col_lnks]
@@ -825,7 +858,8 @@ class DefTags(NewTab):
              'Notes-hdr':    [3, 10, '', sz,  0, txt1, clr1, True, False, 'left', 'Notes: ']
             , 'x-filters-on': [ 5,  6, '', 12, 0, self.colors.clr_red, "", True, True, 'left', self.f_filters_on]
             # This one is for the IVisible Column, not the totals
-            , 'isVisible':    [32, 13, '', sz, 0, clr2, clr2, False, False, 'right', self.f_isVisible]
+            # The 'isVisible' column, below, is set in calc_col_pointers()
+            , 'isVisible':    [ 0, 13, '', sz, 0, clr2, clr2, False, False, 'right', self.f_isVisible]
         }
 
         self.tab_def_post()
@@ -897,7 +931,7 @@ class DefFile(NewTab):
             'summ-title':    [3,  5, '', 14, 21, txt1, clr1, True,  False, 'left',  'Analysis']
           , 'Totals':      [0,  0, '', sz, 15, txt1, clr1, True,  False, 'center', 'Totals']
           , 'Rows':        [3,  6, '', sz,  0, txt2, clr2, True,  False, 'right',  "Rows"]
-          , 'x-uniq-key1': [0,  0, '', sz,  0, "", "",     False, False, 'center', self.f_txt_rows]
+          , 'x-uniq-rows': [0,  0, '', sz,  0, "", "",     False, False, 'center', self.f_txt_rows]
           , 'Files_Notes': [3,  7, '', sz,  0, txt2, clr2, True,  False, 'right',  self.col_key1]
           , 'x-ctot-key1': [0,  0, '', sz,  0, "", "",     False, False, 'center', self.f_uniq_key1]
           , 'Inline-ind':  [3,  8, '', sz,  0, txt2, clr2, True,  False, 'right',  self.col_key2]
@@ -955,40 +989,47 @@ class DefXyml(NewTab):
         # self.tab_def['tab_name'] = 'Xyml'
         self.tab_def['tab_cd_title_def']    = [3,  2, 'Berlin Sans FB Demi', 24, 0, clr1, '', True, False, 'left', self.tab_title]
         self.tab_def['tab_cd_subtitle_def'] = [3,  3, '', sz, 0, '', '', False,  False, 'left', '']
-        self.tab_def['tab_cd_notes_def']    = [3, 15, '', sz, 0, '', '', False,  False, 'left', '']
+        self.tab_def['tab_cd_notes_def']    = [3, 16, '', sz, 0, '', '', False,  False, 'left', '']
         self.tab_def['tab_help_txt'] = self.help_txt
 
         self.tab_def['tab_cd_table_hdr'] = {  # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
              "RowId":         [10, 15, '', sz,  8, txt1, clr1, True, False, 'center', self.hdr_RowId]
             , "Filename":     [11, 15, '', sz, 30, txt1, clr1, True, False, 'left', self.col_key1]
-            , "Xyml-type":    [12, 15, '', sz, 80, txt1, clr1, True, False, 'left', self.col_val1]
+            , "InFiles":      [12, 15, '', sz, 30, txt1, clr1, True, False, 'left', self.col_val1]
+            , "Xyml-type":    [13, 15, '', sz, 80, txt1, clr1, True, False, 'left', self.col_val2]
         }
+
         self.tab_def['tab_cd_table_dtl'] = {  # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
              "RowId":         [10, 0, '', sz, 0, "", "", False, False, 'center', '']
             , "xyml-type":    [11, 0, '', sz, 0, "", "", True, False, 'left', '']
-            , "Filename":     [12, 0, '', sz, 0, "", "", True, False, 'left', '']
+            , "in-files":     [12, 0, '', sz, 0, "", "", True, False, 'left', '']
+            , "Filename":     [13, 0, '', sz, 0, "", "", True, False, 'left', '']
         }
         self.tab_def['tab_cd_table_links']  = [13, 10, '', sz, 40, txt1, clr1, False, False, 'left', '']
         self.tab_def['tab_cd_table_spacer'] = [14,  0, '', sz,  1, txt1, clr1, False, False, 'right', '']
+
         self.tab_def['tab_cd_fixed_summ'] = {  # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
             # totals headers (across and down)
               'summ-title':  [3, 5, '', 14, 26, txt1, clr1, True, False, 'left', 'Analysis']
             , 'Totals':      [0, 0, '', sz, 15, txt1, clr1, True, False, 'center', 'Totals']
 
             , 'Rows':        [3, 6, '', sz, 0, txt2, clr2, True, False, 'right', "Rows"]
-            , 'x-uniq-key1': [0, 0, '', sz, 0, "", "", False, False, 'center', self.f_txt_rows]
+            , 'x-uniq-rows': [0, 0, '', sz, 0, "", "", False, False, 'center', self.f_txt_rows]
 
             , 'Files':       [3, 7, '', sz, 0, txt2, clr2, True, False, 'right', self.col_key1]
             , 'x-ctot-key1': [0, 0, '', sz, 0, "", "", False, False, 'center', self.f_txt_key1]
+
+            , 'in-Files':    [3, 8, '', sz, 0, txt2, clr2, True, False, 'right', self.col_val1]
+            , 'x-ctot-key2': [0, 0, '', sz, 0, "", "", False, False, 'center', self.f_cif_val1_true]
         }
         self.tab_def['tab_cd_fixed_grid']   = {
                           # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
-              'Notes-hdr':   [3, 14, '', 12, 32, txt1, clr1, True, False, 'left', 'Notes: ']
+              'Notes-hdr':   [3, 15, '', 12, 32, txt1, clr1, True, False, 'left', 'Notes: ']
         }
         # Special Totals and Notes for GRID
         tab_note = self.tab_common['xyml']['help_txt']['notes']
-        tab_note.append(f"{self.tab_common['xyml']['col_val1']} Details:")
-        row_num = 8
+        tab_note.append(f"{self.tab_common['xyml']['col_val2']} Details:")
+        row_num = 9
         for xyml_key, xyml_desc_list in self.xyml_descs.items():
             key_id = f'x-tot-key{row_num}'
             val_id = f'f-tot-key{row_num}'
@@ -1052,8 +1093,8 @@ class DefDups(NewTab):
         self.tab_def['tab_cd_table_hdr'] = {
                         # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
              "RowId":       [10, 10, '', sz, 8, txt1, clr1, True, False, 'center', self.hdr_RowId]
-            , "Filename":   [11, 10, '', sz, 35, txt1, clr1, True, False, 'left', self.col_lnks]
-            , "Dups Found": [12, 10, '', sz, 8, txt1, clr1, True, False, 'center', self.col_val1]
+            , "Filename":   [11, 10, '', sz, 35, txt1, clr1, True, False, 'left', self.col_key1]
+            , "Dups Found": [12, 10, '', sz, 8, txt1, clr1, True, False, 'center', self.col_lnks]
         }
         self.tab_def['tab_cd_table_dtl'] = {  # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
               "RowId":      [10, 0, '', sz, 0, "", "", False, False, 'center', '']
@@ -1067,11 +1108,11 @@ class DefDups(NewTab):
             'summ-title':  [3, 5, '', 14, 21, txt1, clr1, True, False, 'left', 'Analysis']
             , 'Totals':      [0, 0, '', sz, 15, txt1, clr1, True, False, 'center', 'Totals']
             , 'Rows':        [3, 6, '', sz, 0, txt2, clr2, True, False, 'right', "Rows"]
-            , 'x-uniq-key1': [0, 0, '', sz, 0, "", "", False, False, 'center', self.f_txt_rows]
-            , 'Tags':        [3, 7, '', sz, 0, txt2, clr2, True, False, 'right', self.col_lnks]
-            , 'x-ctot-key1': [0, 0, '', sz, 0, "", "", False, False, 'center', self.f_txt_lnks]
-            , 'Files':       [3, 8, '', sz, 0, txt2, clr2, True, False, 'right', self.col_val1]
-            , 'x-ctot-val1': [0, 0, '', sz, 0, "", "", False, False, 'center', self.f_num_val1]
+            , 'x-uniq-rows': [0, 0, '', sz, 0, "", "", False, False, 'center', self.f_txt_rows]
+            , 'Tags':        [3, 7, '', sz, 0, txt2, clr2, True, False, 'right', self.col_key1]
+            , 'x-ctot-key1': [0, 0, '', sz, 0, "", "", False, False, 'center', self.f_txt_key1]
+            , 'Files':       [3, 8, '', sz, 0, txt2, clr2, True, False, 'right', self.col_lnks]
+            , 'x-ctot-val1': [0, 0, '', sz, 0, "", "", False, False, 'center', self.f_num_lnks]
         }
         self.tab_def['tab_cd_fixed_grid'] = {
             # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
@@ -1138,7 +1179,7 @@ class DefCode(NewTab):
             'summ-title':    [3,  5, '', 14, 21, txt1, clr1, True,  False, 'left',   'Analysis']
           , 'Totals':      [0,  0, '', sz, 15, txt1, clr1, True,  False, 'center', 'Totals']
           , 'Rows':        [3,  6, '', sz,  0, txt2, clr2, True,  False, 'right',  "Rows"]
-          , 'x-uniq-key1': [0,  0, '', sz,  0, "", "",     False, False, 'center', self.f_txt_rows]
+          , 'x-uniq-rows': [0,  0, '', sz,  0, "", "",     False, False, 'center', self.f_txt_rows]
           , 'Files_Notes': [3,  7, '', sz,  0, txt2, clr2, True,  False, 'right',  self.col_key1]
           , 'x-ctot-key1': [0,  0, '', sz,  0, "", "",     False, False, 'center', self.f_uniq_key1]
           , 'Plug-ins':    [3,  8, '', sz,  0, txt2, clr2, True,  False, 'right',  self.col_key2]
@@ -1235,7 +1276,7 @@ class DefNest(NewTab):
               'summ-title':    [3,  5, '', 14, 21, txt1, clr1, True,  False, 'left',   'Analysis']
             , 'Totals':      [0,  0, '', sz, 15, txt1, clr1, True,  False, 'center', 'Totals']
             , 'Rows':        [3,  6, '', sz,  0, txt2, clr2, True,  False, 'right',  "Rows"]
-            , 'x-uniq-key1': [0,  0, '', sz,  0, "", "",     False, False, 'center', self.f_txt_rows]
+            , 'x-uniq-rows': [0,  0, '', sz,  0, "", "",     False, False, 'center', self.f_txt_rows]
             , 'Plug-In':     [3,  7, '', sz,  0, txt2, clr2, True,  False, 'right',  self.col_key1]
             , 'x-ctot-key1': [0,  0, '', sz,  0, "", "",     False, False, 'center', self.f_uniq_key1]
             , 'Filenames':   [3,  8, '', sz,  0, txt2, clr2, True,  False, 'right',  self.col_key2]
@@ -1422,7 +1463,7 @@ class DefTmpl(NewTab):
             # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
             # totals headers (across and down)
               'Notes-hdr': [3, 21, '', sz, 0, txt1, clr1, True, False, 'left', 'Notes: ']
-            , 'x-uniq-key1': [11, 3, '', sz, 0, "", "", False, False, 'center', self.f_uniq_key1]
+            , 'x-uniq-rows': [11, 3, '', sz, 0, "", "", False, False, 'center', self.f_uniq_key1]
             , 'x-uniq-val1': [13, 3, '', sz, 0, "", "", False, False, 'center', self.f_uniq_val1]
             , 'x-ctot-key1': [11, 4, '', sz, 0, "", "", False, False, 'center', self.f_txt_key1]
             , 'x-ctot-files': [15, 4, '', sz, 0, "", "", False, False, 'center', self.f_num_lnks]
@@ -1467,7 +1508,7 @@ class DefSumm(NewTab):
 
         clr1, txt1, clr2, txt2,         table_style = self.colors.get_tab_clrs(self.tab_id)
         wht0 = 'FFFFFF'
-        val_version = f'=HYPERLINK("https://github.com/slappycat2/obs_v_chk","v.0.9 (beta)")'
+        val_version = f'=HYPERLINK("https://github.com/slappycat2/obsidian-vault-health-check","v.0.9 (beta)")'
         val_donate  = f'=HYPERLINK("https://ko-fi.com/swenlarsen","support this project!")'
 
         self.tab_def['tab_summ_widths'] = {}
@@ -1484,6 +1525,8 @@ class DefSumm(NewTab):
         self.tab_def['tab_cd_table_spacer'] = [0, 0, '', 0, 0, txt1, clr1, False, False, 'right', '']
         self.tab_def['tab_cd_fixed_grid']   = {  # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
             # totals headers (across and down)
+
+            # This paints the red bar with Workbook Summary, among other things
               'wbSumm': [ 3, 7, '', 14, 28, txt1, clr1, True,  False, 'left', 'Workbook Summary']
             , 'col-02': [ 0, 0, '', 11, 12, clr1, clr1, False, False, 'left', "."]
             , 'col-03': [ 0, 0, '', 11,  3, clr1, clr1, False, False, 'left', "."]
@@ -1492,6 +1535,9 @@ class DefSumm(NewTab):
             , 'col-06': [ 0, 0, '', 11,  3, clr1, clr1, False, False, 'left', "."]
             , 'col-07': [ 0, 0, '', 11, 25, clr1, clr1, False, False, 'left', "."]
             , 'col-08': [ 0, 0, '', 11, 12, clr1, clr1, False, False, 'left', "."]
+
+            , 'Vault-Path': [ 3, 2, '', 11, 0, '', '',     False, False, 'left', f"Vault Path: {}"]
+
             , 'img-01': [ 3, 1, '', sz,  0, '', '',     False, False, 'left', "../img/v_chkBanner2.png"]
             , 'row-01': [ 3, 1, '', 72,  0, wht0, wht0, False, False, 'left', "."]
             , 'version':   [  3, 30, '', sz,  0, '', '',  False, False, 'left', val_version]
@@ -1541,6 +1587,9 @@ class DefSumm(NewTab):
 
             # if col or row is 0, use last row or next col
             for tab_def_key, tab_def_summ in tab_cd_fix_summ.items():
+                if tab_def_key == 'Rows' or tab_def_key == 'x-uniq-rows':
+                    continue
+
                 if tab_def_summ[0] == 0:
                     col_idx += 1
                 else:
@@ -1562,10 +1611,58 @@ class DefAr51(NewTab):
         self.colors = wb_obj.Colors
       # self.tab_common = wb_obj.tab_common
         super().__init__(self.tab_id, wb_obj)
+        cfg  = wb_obj.cfg
         ctot = wb_obj.ctot
+        tab_common = wb_obj.tab_common
         sea2 = self.colors.tbl_clrs['sea'][2]
+        pur2 = self.colors.tbl_clrs['pur'][2]
+        red2 = self.colors.tbl_clrs['red'][2]
+        pur0 = self.colors.tbl_clrs['pur'][0]
+        red0 = self.colors.tbl_clrs['red'][0]
+        
+        purt = self.colors.tbl_txts[pur0][0]
+        redt = self.colors.tbl_txts[red0][0]
+
+        file_key1 = f"{tab_common['file']['col_key1']}"
+        xyml_key1 = f"{tab_common['xyml']['col_key1']}"
+        xyml_val1 = f"{tab_common['xyml']['col_val1']}"
+        dups_key1 = f"{tab_common['dups']['col_key1']}"
+
+        file_tot1 = f'=_xlfn.AGGREGATE(3,3,tbl_file[{file_key1}])'
+        file_tot1 = f'=COUNTA(_xlfn.UNIQUE(_xlfn.FILTER(tbl_file[{file_key1}],tbl_file[IsVisible])))*-1'
+        xyml_tot1 = f'=_xlfn.AGGREGATE(3,3,tbl_xyml[{xyml_key1}])*(-1)'
+        xyml_tot2 = f'=COUNTIF(tbl_xyml[{xyml_val1}],TRUE)'
+        dups_tot1 = f'=_xlfn.AGGREGATE(3,3,tbl_dups[{dups_key1}])*(-1)'
+
+        file_desc1 = f"    less Total {file_key1} from {tab_common['file']['tab_name']} tab"
+        xyml_desc1 = f"    less Total {xyml_key1} from {tab_common['xyml']['tab_name']} tab"
+        xyml_desc2 = f"    plus Total {xyml_val1} from {tab_common['xyml']['tab_name']} tab"
+        dups_desc1 = f"    less Total {dups_key1} from {tab_common['dups']['tab_name']} tab"
+
+        ctot_descs = [
+                  '00-Total MD Files in Vault'
+                , '01-Templates Processed'
+                , '02-MD Files in dirs_skip_rel_str'
+                , '03-Files Processed/Dups Teste'
+                , '04-Known Nested Tags Files Found'
+                , '05-Frontmatter YAML Files'
+                , '06-Inline YAML Files'
+                , '07-upd_obs_files'
+                , '08-upd_obs_nests'
+                , '09-upd_obs_props'
+                , '10-Empty Fm/Body in Markdown'
+                , '11-Max Props'
+                , '12-Max Tags'
+                ]
+
+        # f'=COUNTA(_xlfn.UNIQUE(_xlfn.FILTER({self.tbl_name}[{self.col_key1}],{self.tbl_name}[{self.hdr_IsVis}])))'
+        # self.f_txt_key1 = f'=_xlfn.AGGREGATE(3,3,{self.tbl_name}[{self.col_key1}])'
+        # self.f_num_key2 = f'=_xlfn.AGGREGATE(9,3,{self.tbl_name}[{self.col_key2}])'
 
         clr1, txt1, clr2, txt2, table_style = self.colors.get_tab_clrs(self.tab_id)
+        self.tab_def['borders'] = {
+              'proc_3':["C24:C24", "double", self.colors.clr_blk,"top"]
+        }
         self.tab_def['tab_table_style'] = table_style
         # clr1 = tab color,
         # clr2 = secondary "highlights" color, headings
@@ -1594,35 +1691,69 @@ class DefAr51(NewTab):
             "FullPath", True
         }
         # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
-        self.tab_def['cfg-dump'] = [4, 2, '', sz, 20, "", "", False, False, 'left', '']
+        self.tab_def['cfg-dump'] = [7, 2, '', sz, 20, "", "", False, False, 'left', '']
 
         self.tab_def['tab_cd_fixed_grid']   = {  # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
             # totals headers (across and down)
-              'Ctrl-Key':  [1, 20, '', 14, 40,   '', sea2, True, False, 'left', 'Control Counts from v_chk']
-            , 'Ctrl-Val':  [0, 20, '', 14, 10,   '', sea2, True, False, 'right', 'Totals']
-            , 'f-tot-00':  [1, 21, '', 12, 0,   '', '', False, False, 'left', 'Total MD Files in Vault']
-            , 'x-tot-00':  [0, 21, '', 12, 0,   '', '', False, False, 'right', ctot[0]]
-            , 'f-tot-01':  [1, 22, '', 12, 0,   '', '', False, False, 'left', 'Templates Processed']
-            , 'x-tot-01':  [0, 22, '', 12, 0,   '', '', False, False, 'right', ctot[1]]
-            , 'f-tot-02':  [1, 23, '', 12, 0,   '', '', False, False, 'left', 'MD Files in dirs_skip_rel_str']
-            , 'x-tot-02':  [0, 23, '', 12, 0,   '', '', False, False, 'right', ctot[2]]
-            , 'f-tot-03':  [1, 24, '', 12, 0,   '', '', False, False, 'left', 'Dups Tested']
-            , 'x-tot-03':  [0, 24, '', 12, 0,   '', '', False, False, 'right', ctot[3]]
-            , 'f-tot-04':  [1, 25, '', 12, 0,   '', '', False, False, 'left', 'Known Nested Tags Files Found']
-            , 'x-tot-04':  [0, 25, '', 12, 0,   '', '', False, False, 'right', ctot[4]]
-            , 'f-tot-05':  [1, 26, '', 12, 0,   '', '', False, False, 'left', 'Frontmatter YAML Files']
-            , 'x-tot-05':  [0, 26, '', 12, 0,   '', '', False, False, 'right', ctot[5]]
-            , 'f-tot-06':  [1, 27, '', 12, 0,   '', '', False, False, 'left', 'Inline YAML Files']
-            , 'x-tot-06':  [0, 27, '', 12, 0,   '', '', False, False, 'right', ctot[6]]
-            , 'f-tot-07':  [1, 28, '', 12, 0,   '', '', False, False, 'left', 'upd_obs_files']
-            , 'x-tot-07':  [0, 28, '', 12, 0,   '', '', False, False, 'right', ctot[7]]
-            , 'f-tot-08':  [1, 29, '', 12, 0,   '', '', False, False, 'left', 'upd_obs_nests']
-            , 'x-tot-08':  [0, 29, '', 12, 0,   '', '', False, False, 'right', ctot[8]]
-            , 'f-tot-09':  [1, 30, '', 12, 0,   '', '', False, False, 'left', 'upd_obs_props']
-            , 'x-tot-09':  [0, 30, '', 12, 0,   '', '', False, False, 'right', ctot[9]]
+              'Ctrl-Key':   [2, 20, '', 14, 48,   '', sea2, True,  False, 'left', 'Control totals from v_chk']
+            , 'Ctrl-Val':   [0,  0, '', 10, 11,   '', sea2, True,  False, 'right', 'Totals']
+            , 'Run-Bal':    [0,  0, '', 10, 10,   '', sea2, True,  False, 'right', 'Run Tot']
+            , 'Zero-Bal':   [0,  0, '', 10, 13,   '', sea2, True,  False, 'center', 'Zero Bal Chk']
 
-            , 'cfg-keys':  [4, 1, '', 14, 0,   '', sea2, True, False, 'left', 'CFG Keys']
-            , 'cfg-vals':  [5, 1, '', 14, 0,   '', sea2, True, False, 'left', 'Values']
+            , 'f-tot-00':   [2, 21, '', 12,  0,   '',   '', False, False, 'left', ctot_descs[0]]
+            , 'x-tot-00':   [0,  0, '', 12,  0,   '',   '', False, False, 'right', ctot[0]]
+            , 'r-tot-00':   [0,  0, '', 12,  0,   '',   '', False, False, 'right', '=C21']
+
+            , 'f-tot-01':   [2, 22, '', 12,  0,   '',   '', False, False, 'left', ctot_descs[1]]
+            , 'x-tot-01':   [0,  0, '', 12,  0,   '',   '', False, False, 'right', -ctot[1]]
+            , 'r-tot-01':   [0,  0, '', 12,  0,   '',   '', False, False, 'right', '=D21+C22']
+
+            , 'f-tot-02':   [2, 23, '', 12,  0,   '',   '', False, False, 'left', ctot_descs[2]]
+            , 'x-tot-02':   [0,  0, '', 12,  0,   '',   '', False, False, 'right', -ctot[2]]
+            , 'r-tot-02':   [0,  0, '', 12,  0,   '',   '', False, False, 'right', '=D22+C23']
+
+            , 'f-tot-03':   [2, 24, '', 12,  0,   '',   '', False, False, 'left', ctot_descs[3]]
+            , 'x-tot-03':   [0,  0, '', 12,  0,   '',   '', False, False, 'right', ctot[3]]
+            , 'x-total1':   [5,  0, '', 12,  0,   '',   '', False, False, 'center', '=sum(C20:C23)-C24']
+
+            , 'file-notes': [2, 25, '', sz,  0, purt, pur0, False, True,  'left',  file_desc1]
+            , 'file-tot-1': [0,  0, '', 12,  0,   '', pur2, False, False, 'right', file_tot1]
+            , 'file-tot-r': [0,  0, '', 12,  0,   '',   '', False, False, 'right', '=D23+C25']
+
+            , 'xyml-notes': [2, 26, '', sz,  0, redt, red0, False, True,  'left',  xyml_desc1]
+            , 'xyml-tot-1': [0,  0, '', 12,  0,   '', red2, False, False, 'right', xyml_tot1]
+            , 'xyml-run-1': [0,  0, '', 12,  0,   '',   '', False, False, 'right', '=D25+C26']
+
+            , 'xyml-inFls': [2, 27, '', sz,  0, redt, red0, False, True,  'left',  xyml_desc2]
+            , 'xyml-tot-2': [0,  0, '', 12,  0,   '', red2, False, False, 'right', xyml_tot2]
+            , 'xyml-run-2': [0,  0, '', 12,  0,   '',   '', False, False, 'right', '=D26+C27']
+
+            , 'dups-notes': [2, 28, '', sz,  0, redt, red0, False, True,  'left',  dups_desc1]
+            , 'dups-tot-1': [0,  0, '', 12,  0,   '', red2, False, False, 'right', dups_tot1]
+            , 'dups-run-1': [0,  0, '', 12,  0,   '',   '', False, False, 'right', '=D27+C28']
+            , 'dups-bal-1': [0,  0, '', 12,  0,   '',   '', False, False, 'center', '=SUM(C24:C28)']
+
+            , 'f-tot-04':   [2, 30, '', 12,  0,   '',   '', False, False, 'left', ctot_descs[4]]
+            , 'x-tot-04':   [0, 30, '', 12,  0,   '',   '', False, False, 'right', ctot[4]]
+            , 'f-tot-05':   [2, 31, '', 12,  0,   '',   '', False, False, 'left', ctot_descs[5]]
+            , 'x-tot-05':   [0, 31, '', 12,  0,   '',   '', False, False, 'right', ctot[5]]
+            , 'f-tot-06':   [2, 32, '', 12,  0,   '',   '', False, False, 'left', ctot_descs[6]]
+            , 'x-tot-06':   [0, 32, '', 12,  0,   '',   '', False, False, 'right', ctot[6]]
+            , 'f-tot-07':   [2, 33, '', 12,  0,   '',   '', False, False, 'left', ctot_descs[7]]
+            , 'x-tot-07':   [0, 33, '', 12,  0,   '',   '', False, False, 'right', ctot[7]]
+            , 'f-tot-08':   [2, 34, '', 12,  0,   '',   '', False, False, 'left', ctot_descs[8]]
+            , 'x-tot-08':   [0, 34, '', 12,  0,   '',   '', False, False, 'right', ctot[8]]
+            , 'f-tot-09':   [2, 35, '', 12,  0,   '',   '', False, False, 'left', ctot_descs[9]]
+            , 'x-tot-09':   [0, 35, '', 12,  0,   '',   '', False, False, 'right', ctot[9]]
+            , 'f-tot-10':   [2, 36, '', 12,  0,   '',   '', False, False, 'left', ctot_descs[10]]
+            , 'x-tot-10':   [0, 36, '', 12,  0,   '',   '', False, False, 'right', ctot[10]]
+            , 'f-tot-11':   [2, 37, '', 12,  0,   '',   '', False, False, 'left', ctot_descs[11]]
+            , 'x-tot-11':   [0, 37, '', 12,  0,   '',   '', False, False, 'right', ctot[11]]
+            , 'f-tot-12':   [2, 38, '', 12,  0,   '',   '', False, False, 'left', ctot_descs[12]]
+            , 'x-tot-12':   [0, 38, '', 12,  0,   '',   '', False, False, 'right', ctot[12]]
+
+            , 'cfg-keys':  [7, 1, '', 14, 0,   '', sea2, True, False, 'left', 'CFG Keys']
+            , 'cfg-vals':  [8, 1, '', 14, 0,   '', sea2, True, False, 'left', 'Values']
 
 
         }
