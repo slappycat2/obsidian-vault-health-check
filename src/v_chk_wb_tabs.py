@@ -31,19 +31,19 @@ class NewWb(WbDataDef):
                 , 'col_val2': ""
                 , 'col_lnks': "Links"
                 , 'help_txt': {
-                      'subtitle1': [
-                          'Lists all properties and tags found in an Obsidian vault, with '
-                        , 'links back to their respective markdown files. Duplicate Notes,'
-                        , 'existing in different folders, are also detected among various'
-                        , 'other issues and statistics.'
-                        ]
-                        , 'subtitle2': [
-                          'Links back to your vault make it easy to quickly review issues. '
-                        , 'Files with invalid frontmatter/YAML are also listed with links.'
-                        , 'Lastly, if this helps you in any way, PLEASE consider buying'
-                        , "me a coffee via the link, below. It's greatly appreciated! 😉"
-                        ]
-                    , 'notes': [
+                #       'subtitle1': [
+                #         'Lists all properties and tags found in an Obsidian vault, with '
+                #       , 'links back to their respective markdown files. Duplicate Notes,'
+                #       , 'existing in different folders, are also detected among various'
+                #       , 'other issues and statistics.'
+                #       ]
+                #       , 'subtitle2': [
+                #         'Links back to your vault make it easy to quickly review issues. '
+                #       , 'Files with invalid frontmatter/YAML are also listed with links.'
+                #       , 'Lastly, if this helps you in any way, PLEASE consider buying'
+                #       , "me a coffee via the link, below. It's greatly appreciated! 😉"
+                #       ]
+                      'notes': [
                            # 123456789 1 2345678 2 2345678 3 2345678 4 2345678 5 2345678 6 2345678 7 2345678 8
                              'The maximum number of links displayed is currently 15 for Values'
                            , 'and 10 for tags. I kept the numbers low, because it can slow'
@@ -159,7 +159,7 @@ class NewWb(WbDataDef):
                     , 'hdr_clrs': True  #  True=Force Tab Colors; False=Use TableStyle Colors
                     , 'col_key1': "Notes"
                     , 'col_key2': ""
-                    , 'col_val1': "InFiles"
+                    , 'col_val1': "Fm Okay"
                     , 'col_val2': "Likely Issue"
                     , 'col_lnks': ""
                         # Possible errors needing more detail...
@@ -173,11 +173,16 @@ class NewWb(WbDataDef):
                             'These are markdown files with frontmatter that may need to be reviewed.'
                             ]
                         , 'notes': [
-                               'Note that the terms "frontmatter" and "YAML" are interchangeable here.'
-                             , '* Corrupt, meaning the Python package PyYAML 6.0.2 is unable to perform a'
-                             , '"safe_load" of the notes frontmatter, or the YAML is otherwise problematic.'
-                             , 'These may or may not be indicative of an error, depending on how you setup'
-                             , 'and use your vault, but should be worthy of review.'
+                               '* Corrupt, meaning the Python package PyYAML (6.0.2) is unable to perform a'
+                             , '  "safe_load" of the notes frontmatter, or the YAML is otherwise problematic.'
+                               ' - Note that the terms "frontmatter" and "YAML" are interchangeable here.'
+                             , ' - Items on this report may or may not be indicative of an error, depending '
+                             , '    on how you setup and use your vault. At the very least, they should be worthy'
+                             , '    of review.'
+                             , 'Fm Okay - Frontmatter loaded OK and was parsed w/o error, however properties'
+                             , '    and/or tags were found inline that caused a failure.'
+                             , ''
+                             , ''
                             ]
                         }
                     , 'data_src': ['obs_xyaml']
@@ -238,7 +243,7 @@ class NewWb(WbDataDef):
                             , 'DO NOT ATTEMPT TO EDIT THESE FILES UNLESS YOU'
                             , "REALLY KNOW WHAT YOU'RE DOING!'"
                             , "I certainly don't know what I'm doing, so don't be looking'"
-                              "down the table at me for help on this one!"
+                            , "down the table at me for help on this one!"
                             , "Just use the Plugin's interface and keep your head about"
                             , "you! CARRY ON!!! ;-)"
                         ]
@@ -377,7 +382,7 @@ class NewWb(WbDataDef):
 class NewTab:
     def __init__(self, tab_id, wb_obj):
         self.tab_id = tab_id
-        cfg = wb_obj.cfg
+        self.cfg = wb_obj.cfg
         # self.tab_common = tab_common
 
         self.tab_name       = wb_obj.tab_common[tab_id]['tab_name']
@@ -386,21 +391,19 @@ class NewTab:
         self.col_key2       = wb_obj.tab_common[tab_id]['col_key2']
         self.col_lnks       = wb_obj.tab_common[tab_id]['col_lnks']
         self.col_val1       = wb_obj.tab_common[tab_id]['col_val1']
+        self.col_val2       = wb_obj.tab_common[tab_id]['col_val2']
         self.help_txt       = wb_obj.tab_common[tab_id]['help_txt']
         self.data_src       = wb_obj.tab_common[tab_id]['data_src']
         self.tab_title      = wb_obj.tab_common[tab_id]['tab_titl']
         self.showGridLines  = wb_obj.tab_common[tab_id]['shw_grid']
         self.xyml_descs     = wb_obj.xyml_descs
 
-        ctot = cfg.get('ctot', [0] * 13)
+        ctot = self.cfg.get('ctot', [0] * 13)
 
         self.link_max_vals   = ctot[11]
         self.link_max_tags   = ctot[12]
-        self.link_lim_vals = cfg.get('link_lim_vals', 0)
-        self.link_lim_tags = cfg.get('link_lim_tags', 0)
-
-        # Todo: Standardize usage of 'self.col_val2 = "ValCount"'
-        self.col_val2 = "CaseDiff"
+        self.link_lim_vals = self.cfg.get('link_lim_vals', 0)
+        self.link_lim_tags = self.cfg.get('link_lim_tags', 0)
 
         # Fill and text colors for grid tab headings
         self.colors = wb_obj.Colors
@@ -955,13 +958,11 @@ class DefFile(NewTab):
 
         self.tab_def_post()
 
-class DefXyml(NewTab):
+class DefCode(NewTab):
     def __init__(self,wb_obj):
-        self.tab_id = 'xyml'
+        self.tab_id = 'code'
         self.tab_common = wb_obj.tab_common
         super().__init__(self.tab_id, wb_obj)
-        # cfg = WbDataDef(0)
-        # self.xyml_descs = cfg.xyml_descs
 
         clr1, txt1, clr2, txt2, table_style = self.colors.get_tab_clrs(self.tab_id)
         self.tab_def['tab_table_style'] = table_style
@@ -971,7 +972,86 @@ class DefXyml(NewTab):
         # txt1 = text color on cells that use color fills
 
         sz = self.tab_txt_sz
+        self.font_title_lst = ['Berlin Sans FB Demi', 24, clr1]
+        self.font_subs_lst  = ['Berlin Sans', 14, txt1]
+        self.font_body_lst  = ['Calibri', sz, txt1]
+        self.tab_def['tab_color'] = clr1
 
+        self.tab_def['tab_table_link_spcrs'] = True  # Always, TRUE for now
+        self.tab_def['tab_txt_sz']    = sz
+        self.tab_def['showGridLines'] = self.showGridLines
+
+        self.tab_def['hdr_links_pfx'] = "CodeBlock-"
+        self.tab_def['tab_table_links_cols'] = 20
+        self.tab_def['tab_has_isVisible_col'] = True
+        self.tab_def['tab_tots_isVisible_col'] = 44
+
+        # self.tab_def['tab_name'] = 'Code'
+        self.tab_def['tab_cd_title_def']    = [3,  2, 'Berlin Sans FB Demi', 24, 0, clr1, '', True, False, 'left', self.tab_title]
+        self.tab_def['tab_cd_subtitle_def'] = [3,  3, '', sz, 0, '', '', False,  False, 'left', '']
+        self.tab_def['tab_cd_notes_def']    = [3, 13, '', sz, 0, '', '', False,  False, 'left', '']
+        self.tab_def['tab_help_txt'] = self.help_txt
+
+        self.tab_def['tab_cd_table_hdr'] = {
+                      # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
+             "RowId":       [10, 10, '', sz,  8, txt1, clr1, True, False, 'center', self.hdr_RowId]
+           , "FileNm":      [11, 10, '', sz, 30, txt1, clr1, True, False, 'left'  , self.col_key1]
+           , "PluginId":    [12, 30, '', sz, 25, txt1, clr1, True, False, 'left' , self.col_key2]
+           , "Signature":   [13, 10, '', sz, 17, txt1, clr1, True, False, 'left' , self.col_val1]
+           , "CbCnt":       [14, 10, '', sz,  8, txt1, clr1, True, False, 'left' , self.col_lnks]
+           }
+        self.tab_def['tab_cd_table_dtl'] =  {
+            # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
+             "RowId":     [10,  0, '', sz, 0, "", "", False, False, 'center', '']
+           , "filenm":    [11,  0, '', sz, 0, "", "", True, False,  'left', '']
+           , "pluginId":  [12,  0, '', sz, 0, "", "", False, False, 'left', '']
+           , "sig":       [13,  0, '', sz, 0, "", "", False, False, 'left', '']
+           , "cbCnt":     [14,  0, '', sz, 0, "", "", False, False, 'center', '']
+           }
+        self.tab_def['tab_cd_table_links']     = [15, 0, '', sz, 25, txt1, clr1, False, False, 'left'  , '']
+        self.tab_def['tab_cd_table_spacer'] = [16, 0, '', sz,  1, txt1, clr1, False, False, 'right'  , '']
+        self.tab_def['tab_cd_fixed_summ']   = {  # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
+            # totals headers (across and down)
+            'summ-title':    [3,  5, '', 14, 21, txt1, clr1, True,  False, 'left',   'Analysis']
+          , 'Totals':      [0,  0, '', sz, 15, txt1, clr1, True,  False, 'center', 'Totals']
+          , 'Rows':        [3,  6, '', sz,  0, txt2, clr2, True,  False, 'right',  "Rows"]
+          , 'x-uniq-rows': [0,  0, '', sz,  0, "", "",     False, False, 'center', self.f_txt_rows]
+          , 'Files_Notes': [3,  7, '', sz,  0, txt2, clr2, True,  False, 'right',  self.col_key1]
+          , 'x-ctot-key1': [0,  0, '', sz,  0, "", "",     False, False, 'center', self.f_uniq_key1]
+          , 'Plug-ins':    [3,  8, '', sz,  0, txt2, clr2, True,  False, 'right',  self.col_key2]
+          , 'x-ctot-key2': [0,  0, '', sz,  0, "", "",     False, False, 'center', self.f_uniq_key2]
+          , 'Signatures':  [3,  9, '', sz,  0, txt2, clr2, True,  False, 'right',  self.col_val1]
+          , 'x-ctot-val1': [0,  0, '', sz,  0, "", "",     False, False, 'center', self.f_uniq_val1]
+          , 'Count':       [3, 10, '', sz,  0, txt2, clr2, True,  False, 'right',  self.col_lnks]
+          , 'x-ctot-lnks': [0,  0, '', sz,  0, "", "",     False, False, 'center', self.f_num_lnks]
+        }
+        self.tab_def['tab_cd_fixed_grid']   = {
+          # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
+          # totals headers (across and down)
+            'Notes-hdr':   [3, 12, '', sz,  0, txt1, clr1, True,  False, 'left',   'Notes: ']
+
+          , 'x-null-values':  [11,  8, '', 12, 0, self.colors.clr_red,  "", True, True,   'left',   self.f_null_values]
+          , 'x-filters-on':   [ 5,  6, '', 12, 0, self.colors.clr_red,  "", True, True,   'left',   self.f_filters_on]
+          # This one is for the IVisible Column, not the totals
+          , 'isVisible':      [44, 0, '', sz, 0, clr2, clr2, False, False, 'right',  self.f_isVisible]
+          }
+
+        self.tab_def_post()
+
+class DefXyml(NewTab):
+    def __init__(self,wb_obj):
+        self.tab_id = 'xyml'
+        self.tab_common = wb_obj.tab_common
+        super().__init__(self.tab_id, wb_obj)
+
+        clr1, txt1, clr2, txt2, table_style = self.colors.get_tab_clrs(self.tab_id)
+        self.tab_def['tab_table_style'] = table_style
+        # clr1 = tab color,
+        # clr2 = secondary "highlights" color, headings
+        # clr1 = fill color on cells that use color fills
+        # txt1 = text color on cells that use color fills
+
+        sz = self.tab_txt_sz
         self.font_title_lst = ['Berlin Sans FB Demi', 24, clr1]
         self.font_subs_lst =  ['Berlin Sans', 14, txt1]
         self.font_body_lst =  ['Calibri', sz, txt1]
@@ -1094,12 +1174,12 @@ class DefDups(NewTab):
                         # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
              "RowId":       [10, 10, '', sz, 8, txt1, clr1, True, False, 'center', self.hdr_RowId]
             , "Filename":   [11, 10, '', sz, 35, txt1, clr1, True, False, 'left', self.col_key1]
-            , "Dups Found": [12, 10, '', sz, 8, txt1, clr1, True, False, 'center', self.col_lnks]
+            , "Links": [12, 10, '', sz, 8, txt1, clr1, True, False, 'center', self.col_lnks]
         }
         self.tab_def['tab_cd_table_dtl'] = {  # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
               "RowId":      [10, 0, '', sz, 0, "", "", False, False, 'center', '']
             , "Filename":   [11, 0, '', sz, 0, "", "", True, False, 'left', '']
-            , "Dups Found": [12, 0, '', sz, 0, "", "", False, False, 'left', '']
+            , "Links": [12, 0, '', sz, 0, "", "", False, False, 'center', '']
         }
         self.tab_def['tab_cd_table_links']     = [13, 0, '', sz, 25, txt1, clr1, False, False, 'left', '']
         self.tab_def['tab_cd_table_spacer'] = [14, 0, '', sz,  1, txt1, clr1, False, False, 'right', '']
@@ -1119,86 +1199,6 @@ class DefDups(NewTab):
             # totals headers (across, then down)
               'Notes-hdr':   [3, 10, '', sz, 0, txt1, clr1, True, False, 'left', 'Notes: ']
         }
-
-        self.tab_def_post()
-
-class DefCode(NewTab):
-    def __init__(self,wb_obj):
-        self.tab_id = 'code'
-        self.tab_common = wb_obj.tab_common
-        super().__init__(self.tab_id, wb_obj)
-
-        clr1, txt1, clr2, txt2, table_style = self.colors.get_tab_clrs(self.tab_id)
-        self.tab_def['tab_table_style'] = table_style
-        # clr1 = tab color,
-        # clr2 = secondary "highlights" color, headings
-        # clr1 = fill color on cells that use color fills
-        # txt1 = text color on cells that use color fills
-
-        sz = self.tab_txt_sz
-        self.font_title_lst = ['Berlin Sans FB Demi', 24, clr1]
-        self.font_subs_lst  = ['Berlin Sans', 14, txt1]
-        self.font_body_lst  = ['Calibri', sz, txt1]
-        self.tab_def['tab_color'] = clr1
-
-        self.tab_def['tab_table_link_spcrs'] = True  # Always, TRUE for now
-        self.tab_def['tab_txt_sz']    = sz
-        self.tab_def['showGridLines'] = self.showGridLines
-
-        self.tab_def['hdr_links_pfx'] = "CodeBlock-"
-        self.tab_def['tab_table_links_cols'] = 10
-        self.tab_def['tab_has_isVisible_col'] = True
-        self.tab_def['tab_tots_isVisible_col'] = 34
-
-        # self.tab_def['tab_name'] = 'Code'
-        self.tab_def['tab_cd_title_def']    = [3,  2, 'Berlin Sans FB Demi', 24, 0, clr1, '', True, False, 'left', self.tab_title]
-        self.tab_def['tab_cd_subtitle_def'] = [3,  3, '', sz, 0, '', '', False,  False, 'left', '']
-        self.tab_def['tab_cd_notes_def']    = [3, 13, '', sz, 0, '', '', False,  False, 'left', '']
-        self.tab_def['tab_help_txt'] = self.help_txt
-
-        self.tab_def['tab_cd_table_hdr'] = {
-                      # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
-             "RowId":       [10, 10, '', sz,  8, txt1, clr1, True, False, 'center', self.hdr_RowId]
-           , "FileNm":      [11, 10, '', sz, 30, txt1, clr1, True, False, 'left'  , self.col_key1]
-           , "PluginId":    [12, 30, '', sz, 25, txt1, clr1, True, False, 'left' , self.col_key2]
-           , "Signature":   [13, 10, '', sz, 17, txt1, clr1, True, False, 'left' , self.col_val1]
-           , "CbCnt":       [14, 10, '', sz,  8, txt1, clr1, True, False, 'left' , self.col_lnks]
-           }
-        self.tab_def['tab_cd_table_dtl'] =  {
-            # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
-             "RowId":     [10,  0, '', sz, 0, "", "", False, False, 'center', '']
-           , "filenm":    [11,  0, '', sz, 0, "", "", True, False,  'left', '']
-           , "pluginId":  [12,  0, '', sz, 0, "", "", False, False, 'left', '']
-           , "sig":       [13,  0, '', sz, 0, "", "", False, False, 'left', '']
-           , "cbCnt":     [14,  0, '', sz, 0, "", "", False, False, 'center', '']
-           }
-        self.tab_def['tab_cd_table_links']     = [15, 0, '', sz, 25, txt1, clr1, False, False, 'left'  , '']
-        self.tab_def['tab_cd_table_spacer'] = [16, 0, '', sz,  1, txt1, clr1, False, False, 'right'  , '']
-        self.tab_def['tab_cd_fixed_summ']   = {  # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
-            # totals headers (across and down)
-            'summ-title':    [3,  5, '', 14, 21, txt1, clr1, True,  False, 'left',   'Analysis']
-          , 'Totals':      [0,  0, '', sz, 15, txt1, clr1, True,  False, 'center', 'Totals']
-          , 'Rows':        [3,  6, '', sz,  0, txt2, clr2, True,  False, 'right',  "Rows"]
-          , 'x-uniq-rows': [0,  0, '', sz,  0, "", "",     False, False, 'center', self.f_txt_rows]
-          , 'Files_Notes': [3,  7, '', sz,  0, txt2, clr2, True,  False, 'right',  self.col_key1]
-          , 'x-ctot-key1': [0,  0, '', sz,  0, "", "",     False, False, 'center', self.f_uniq_key1]
-          , 'Plug-ins':    [3,  8, '', sz,  0, txt2, clr2, True,  False, 'right',  self.col_key2]
-          , 'x-ctot-key2': [0,  0, '', sz,  0, "", "",     False, False, 'center', self.f_uniq_key2]
-          , 'Signatures':  [3,  9, '', sz,  0, txt2, clr2, True,  False, 'right',  self.col_val1]
-          , 'x-ctot-val1': [0,  0, '', sz,  0, "", "",     False, False, 'center', self.f_uniq_val1]
-          , 'Count':       [3, 10, '', sz,  0, txt2, clr2, True,  False, 'right',  self.col_lnks]
-          , 'x-ctot-lnks': [0,  0, '', sz,  0, "", "",     False, False, 'center', self.f_num_lnks]
-        }
-        self.tab_def['tab_cd_fixed_grid']   = {
-          # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
-          # totals headers (across and down)
-            'Notes-hdr':   [3, 12, '', sz,  0, txt1, clr1, True,  False, 'left',   'Notes: ']
-
-          , 'x-null-values':  [11,  8, '', 12, 0, self.colors.clr_red,  "", True, True,   'left',   self.f_null_values]
-          , 'x-filters-on':   [ 5,  6, '', 12, 0, self.colors.clr_red,  "", True, True,   'left',   self.f_filters_on]
-          # This one is for the IVisible Column, not the totals
-          , 'isVisible':      [34, 0, '', sz, 0, clr2, clr2, False, False, 'right',  self.f_isVisible]
-          }
 
         self.tab_def_post()
 
@@ -1481,6 +1481,10 @@ class DefSumm(NewTab):
         self.tab_common = wb_obj.tab_common
         wb_def = wb_obj.wb_def
         super().__init__(self.tab_id, wb_obj)
+        ctot = self.cfg['ctot']
+        dir_vault_txt = f"Vault Path: {self.cfg['dir_vault']}"
+        c_date = self.cfg['c_date']
+        comm = wb_obj.tab_common
 
         clr1, txt1, clr2, txt2, table_style = self.colors.get_tab_clrs(self.tab_id)
         self.tab_def['tab_table_style'] = table_style
@@ -1510,13 +1514,36 @@ class DefSumm(NewTab):
         wht0 = 'FFFFFF'
         val_version = f'=HYPERLINK("https://github.com/slappycat2/obsidian-vault-health-check","v.0.9 (beta)")'
         val_donate  = f'=HYPERLINK("https://ko-fi.com/swenlarsen","support this project!")'
-
-        self.tab_def['tab_summ_widths'] = {}
+        pros_key1 = f"{comm['pros']['col_key1']}"
+        pros_lnks = f"{comm['pros']['col_lnks']}"
+        tags_lnks = f"{comm['tags']['col_lnks']}"
+        dups_key1 = f"{comm['dups']['col_key1']}"
+        xyml_key1 = f"{comm['xyml']['col_key1']}"
+        xyml_val2 = f"{comm['xyml']['col_val2']}"
+        file_val2 = f"{comm['file']['col_val2']}"
+        # Note that the following formulas do not care about hidden rows (op=2). They are true totals.
+        hdr_summ = {
+              'Total Markdown Files in Vault':   [3, 3, ctot[0]]
+            , 'Templates (skipped)':             [3, 4, ctot[1]]
+            , 'Notes in Ignored Dirs (skipped)': [3, 5, ctot[2]]
+            , 'Notes Analyzed':                  [3, 6, ctot[3]]
+            , 'Duplicate Notes':                 [3, 7, f"=_xlfn.AGGREGATE(3,2,tbl_dups[{dups_key1}])"]
+            , 'Disabled Plugins':                [6, 3, '=J28-J29']
+            , 'YAML Issues':                     [6, 4, f"=_xlfn.AGGREGATE(3,2,tbl_xyml[{xyml_key1}])"]
+            , 'Notes w/No Properties':           [6, 5, f'=COUNTIF(tbl_xyml[{xyml_val2}],"No Properties")']
+            , 'Dataview Queries':                [6, 6, f'=COUNTIF(tbl_code[Plugins],"Dataview")']
+            , 'Upper Case in YAML':              [6, 7, f"=_xlfn.AGGREGATE(3,2,tbl_file[{file_val2}])"]
+            , 'Unique Properties':               [9, 3, f"=_xlfn.AGGREGATE(3,2,tbl_pros[{pros_key1}])"]
+            , 'Deprecated Properties':           [9, 4, f'=COUNTIF(tbl_pros[{pros_key1}],"*Deprecated in*")']
+            , 'Properties ending w/colon':       [9, 5, f'=COUNTIF(tbl_pros[{pros_key1}],"*:*")']
+            , 'Single Use Properties':           [9, 6, f'=COUNTIF(tbl_pros[{pros_lnks}],1)']
+            , 'Single Use Tags':                 [9, 7, f'=COUNTIF(tbl_tags[{tags_lnks}],1)']
+            }
 
         # self.tab_def['tab_name'] = 'Summary'
         self.tab_def['tab_cd_title_def']    = [3,  2, 'Berlin Sans FB Demi', sz, 0, clr1, '', True, False, 'left', '']
-        self.tab_def['tab_cd_notes_def']    = [14, 8, '', sz, 0, '', '', False, False, 'left', '']
-        self.tab_def['tab_help_txt']        = self.tab_common['summ']['help_txt']
+        self.tab_def['tab_cd_notes_def']    = [14, 3, '', sz, 0, '', '', False, False, 'left', '']
+        # self.tab_def['tab_help_txt']        = self.tab_common['summ']['help_txt']
         self.tab_def['tab_cd_subtitle1_def'] = [3, 2, '', sz, 0, '', '', False, False, 'left', '']
         self.tab_def['tab_cd_subtitle2_def'] = [7, 2, '', sz, 0, '', '', False, False, 'left', '']
         self.tab_def['tab_cd_table_hdr']    = {}
@@ -1526,55 +1553,64 @@ class DefSumm(NewTab):
         self.tab_def['tab_cd_fixed_grid']   = {  # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
             # totals headers (across and down)
 
-            # This paints the red bar with Workbook Summary, among other things
-              'wbSumm': [ 3, 7, '', 14, 28, txt1, clr1, True,  False, 'left', 'Workbook Summary']
-            , 'col-02': [ 0, 0, '', 11, 12, clr1, clr1, False, False, 'left', "."]
+            # This paints the red bar with Workbook Summary, and sets col widths, among other things
+              'wbSumm': [ 3, 9, '', 14, 29, txt1, clr1, True,  False, 'left', 'Workbook Summary']
+            , 'col-02': [ 0, 0, '', 11, 10, clr1, clr1, False, False, 'left', "."]
             , 'col-03': [ 0, 0, '', 11,  3, clr1, clr1, False, False, 'left', "."]
             , 'col-04': [ 0, 0, '', 11, 25, clr1, clr1, False, False, 'left', "."]
             , 'col-05': [ 0, 0, '', 11, 14, clr1, clr1, False, False, 'left', "."]
             , 'col-06': [ 0, 0, '', 11,  3, clr1, clr1, False, False, 'left', "."]
             , 'col-07': [ 0, 0, '', 11, 25, clr1, clr1, False, False, 'left', "."]
-            , 'col-08': [ 0, 0, '', 11, 12, clr1, clr1, False, False, 'left', "."]
+            , 'col-08': [ 0, 0, '', 11, 10, clr1, clr1, False, False, 'left', "."]
 
-            , 'Vault-Path': [ 3, 2, '', 11, 0, '', '',     False, False, 'left', f"Vault Path: {}"]
-
-            , 'img-01': [ 3, 1, '', sz,  0, '', '',     False, False, 'left', "../img/v_chkBanner2.png"]
-            , 'row-01': [ 3, 1, '', 72,  0, wht0, wht0, False, False, 'left', "."]
-            , 'version':   [  3, 30, '', sz,  0, '', '',  False, False, 'left', val_version]
-            , 'donate':    [ 10, 30, '', sz,  0, '', '',  False, False, 'right', val_donate]
-            , 'Notes-hdr': [ 14,  7, '', 12, 32, txt1, clr1, True, False, 'left', 'Notes: ']
+            , 'img-01':    [  3,  1, '', sz,  0, '', '',     False, False, 'left', "../img/v_chkBanner2.png"]
+            , 'row-01':    [  3,  1, '', 72,  0, wht0, wht0, False, False, 'left', "."]
+            , 'dir-vault': [  3,  2, '', 16,  0, '','', True, False, 'left', dir_vault_txt]
+            , 'c-date':    [ 10,  2, '', 10,  0, '','', True, False, 'right', c_date]
+            , 'version':   [  3, 31, '', sz,  0, '', '',  False, False, 'left', val_version]
+            , 'donate':    [ 10, 31, '', sz,  0, '', '',  False, False, 'right', val_donate]
+            , 'Notes-hdr': [ 14,  2, '', 16, 32, txt1, clr1, True, False, 'left', 'Notes: ']
 
         }
-        # xl_set_border(summary_tab, "D4:J6", "thin", blud4)
-        # xl_set_border(summary_tab, "D11:K11", "thin", blk00)
-        # xl_set_border(summary_tab, "I12:K12", "thin", blk00)
-        # xl_set_border(summary_tab, "D15:N15", "thick", blk00)
-        # xl_set_border(summary_tab, "D16:N16", "thin", blk00)
-        # xl_set_border(summary_tab, "E19:F21", "thin", blk00)
+        # Continue Building Summary Grid...
+        cnt = 0
+        for key, val in hdr_summ.items():
+            cnt += 1
+            uniq_key: str = f'hdr-summ-k-{cnt}'
+            uniq_val: str = f'hdr-summ-v-{cnt}'
+            def_key = [ val[0], val[1], '', 11, 0, '', '', True, False, 'left', key]
+            def_val = [ 0, 0, '', 11, 0, '', '', False, False, 'right', val[2]]
+            self.tab_def['tab_cd_fixed_grid'][uniq_key] = def_key
+            self.tab_def['tab_cd_fixed_grid'][uniq_val] = def_val
+
+
+
         self.tab_def['borders'] = {
-              'footer':["C30:J30", "thin", self.colors.clr_blk, "top"]
-            , 'summ_1':["C9:D9",   "thick", self.colors.clr_blk, "bottom"]
-            , 'summ_2':["C16:D16", "thick", self.colors.clr_blk, "bottom"]
-            , 'summ_3':["C25:D25", "thick", self.colors.clr_blk, "bottom"]
-            , 'summ_4':["F9:G9",   "thick", self.colors.clr_blk, "bottom"]
-            , 'summ_5':["F16:G16", "thick", self.colors.clr_blk, "bottom"]
-            , 'summ_6':["F25:G25", "thick", self.colors.clr_blk, "bottom"]
-            , 'summ_7':["I9:J9",   "thick", self.colors.clr_blk, "bottom"]
-            , 'summ_8':["I16:J16", "thick", self.colors.clr_blk, "bottom"]
-            , 'summ_9':["I25:J25", "thick", self.colors.clr_blk, "bottom"]
+              'footer':["C31:J31", "thin",  self.colors.clr_blk, "top"]
+            , 'summ_1':["C11:D11", "thick", self.colors.clr_blk, "bottom"]
+            , 'summ_2':["C17:D17", "thick", self.colors.clr_blk, "bottom"]
+            , 'summ_3':["C26:D26", "thick", self.colors.clr_blk, "bottom"]
+            , 'summ_4':["F11:G11", "thick", self.colors.clr_blk, "bottom"]
+            , 'summ_5':["F17:G17", "thick", self.colors.clr_blk, "bottom"]
+            , 'summ_6':["F26:G26", "thick", self.colors.clr_blk, "bottom"]
+            , 'summ_7':["I11:J11", "thick", self.colors.clr_blk, "bottom"]
+            , 'summ_8':["I17:J17", "thick", self.colors.clr_blk, "bottom"]
+            , 'summ_9':["I26:J26", "thick", self.colors.clr_blk, "bottom"]
         }
         tab_summ_map = {
-              'pros': [ 3,  9]
-            , 'vals': [ 3, 16]
-            , 'tags': [ 3, 25]
-            , 'file': [ 6,  9]
-            , 'xyml': [ 6, 16]
-            , 'dups': [ 6, 25]
-            , 'code': [ 9,  9]
-            , 'nest': [ 9, 16]
-            , 'plug': [ 9, 25]
+              'pros': [ 3, 11]
+            , 'vals': [ 3, 17]
+            , 'tags': [ 3, 26]
+            , 'file': [ 6, 11]
+            , 'xyml': [ 6, 17]
+            , 'dups': [ 6, 26]
+            , 'code': [ 9, 11]
+            , 'nest': [ 9, 17]
+            , 'plug': [ 9, 26]
         }
-
+        # Builds the colored totals boxes on the summary pages by reading in all the tab_defs
+        # from each tab, and changing the col/row to match the tab_summ_map, above
+        # It skips the Rows Totals and sets the widths to zero, since they are assigned above.
         self.tab_def['tab_cd_fixed_summ'] = {}
         new_tab_fix_summ = {}
 
