@@ -9,7 +9,7 @@ This system will run a set of python scripts and read[^1] through all Markdown f
 ### Features
 - Uses Python to run locally without use of Obsidian or it's API. In this way, it's capable of finding lost tags and misspelled properties.
 - All Tags, Properties and their Values are grouped and listed for easy isolation of where they are used in the vault.
-- Common issues, such as properties ending with a colon, use of uppercase and deprecated properities, are highlighted.
+- Common issues, such as properties ending with a colon, use of uppercase and deprecated properties, are highlighted.
 - Links back to the vault are provided to make it easy for you to review and manually update your vault as you see fit.
 - Duplicate notes (same name, in different directories) are also listed in a separate tab.
 - Notes with Invalid Properties are also tracked w/likely reasons as to why they may have failed to be processed.
