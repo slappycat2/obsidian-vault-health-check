@@ -1,7 +1,7 @@
 # Obsidian Vault Health Check (beta)
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Z8Z71B3VAA)
 
-![image](https://github.com/user-attachments/assets/cfd24288-3a92-4b89-9466-7e3010a599e5)
+![image](img/summ_screen.png)
 
 ## Produces a Spreadsheet/Workbook of all **Properties**, their **Values**, and **Tags**
 This system will run a set of python scripts and read[^1] through all Markdown files in a given vault and gather statistics on all **Properties**, their **Values**, and **Tags** (both frontmatter and inline), producing a spreadsheet for further user analysis. It will also document all duplicates filenames found in the vault, as well as any possibly corrupt YAML[^2]
