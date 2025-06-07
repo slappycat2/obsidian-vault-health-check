@@ -1,6 +1,6 @@
 from openpyxl.styles import Side
 import copy
-from v_chk_wb_setup import *
+from v_chk_wb_setup import WbDataDef
 from v_chk_class_lib import Colors
 
 class NewWb(WbDataDef):
@@ -456,7 +456,6 @@ class NewTab:
         self.f_txt_val1   = f'=_xlfn.AGGREGATE(3,3,{self.tbl_name}[{self.col_val1}])'
         self.f_txt_val2   = f'=_xlfn.AGGREGATE(3,3,{self.tbl_name}[{self.col_val2}])'
         self.f_txt_lnks   = f'=_xlfn.AGGREGATE(3,3,{self.tbl_name}[{self.col_lnks}])'
-        self.f_cif_left   = f'=COUNTIF({self.tbl_name}[{self.col_val1}],INDIRECT(ADDRESS(ROW(),COLUMN()-1,4)))'
         self.f_cif_val1_true   = f'=COUNTIF({self.tbl_name}[{self.col_val1}],True)'
 
 
@@ -1113,8 +1112,9 @@ class DefXyml(NewTab):
         for xyml_key, xyml_desc_list in self.xyml_descs.items():
             key_id = f'x-tot-key{row_num}'
             val_id = f'f-tot-key{row_num}'
+            cntif = f'=COUNTIF({self.tbl_name}[{self.col_val2}],"{xyml_desc_list[0]}")'
             self.tab_def['tab_cd_fixed_summ'][key_id] = [3, row_num, '', sz, 0, txt2, clr2, True, False, 'right', xyml_desc_list[0]]
-            self.tab_def['tab_cd_fixed_summ'][val_id] = [0, 0, '', sz, 0, "", "", False, False, 'center', self.f_cif_left]
+            self.tab_def['tab_cd_fixed_summ'][val_id] = [0, 0, '', sz, 0, "", "", False, False, 'center', cntif]
             tab_note.append(f' - {xyml_desc_list[0]:<30}: {xyml_desc_list[1]}')
             row_num += 1
 
@@ -1523,19 +1523,19 @@ class DefSumm(NewTab):
         file_val2 = f"{comm['file']['col_val2']}"
         # Note that the following formulas do not care about hidden rows (op=2). They are true totals.
         hdr_summ = {
-              'Total Markdown Files in Vault':   [3, 3, ctot[0]]
+              'Total Markdown Files':            [3, 3, ctot[0]]
             , 'Templates (skipped)':             [3, 4, ctot[1]]
-            , 'Notes in Ignored Dirs (skipped)': [3, 5, ctot[2]]
+            , 'Ignored Folder Notes':            [3, 5, ctot[2]]
             , 'Notes Analyzed':                  [3, 6, ctot[3]]
             , 'Duplicate Notes':                 [3, 7, f"=_xlfn.AGGREGATE(3,2,tbl_dups[{dups_key1}])"]
             , 'Disabled Plugins':                [6, 3, '=J28-J29']
             , 'YAML Issues':                     [6, 4, f"=_xlfn.AGGREGATE(3,2,tbl_xyml[{xyml_key1}])"]
             , 'Notes w/No Properties':           [6, 5, f'=COUNTIF(tbl_xyml[{xyml_val2}],"No Properties")']
-            , 'Dataview Queries':                [6, 6, f'=COUNTIF(tbl_code[Plugins],"Dataview")']
+            , 'Dataview Query Notes':            [6, 6, f'=COUNTIF(tbl_code[Plugins],"Dataview")']
             , 'Upper Case in YAML':              [6, 7, f"=_xlfn.AGGREGATE(3,2,tbl_file[{file_val2}])"]
             , 'Unique Properties':               [9, 3, f"=_xlfn.AGGREGATE(3,2,tbl_pros[{pros_key1}])"]
             , 'Deprecated Properties':           [9, 4, f'=COUNTIF(tbl_pros[{pros_key1}],"*Deprecated in*")']
-            , 'Properties ending w/colon':       [9, 5, f'=COUNTIF(tbl_pros[{pros_key1}],"*:*")']
+            , 'Properties w/colons':             [9, 5, f'=COUNTIF(tbl_pros[{pros_key1}],"*:*")']
             , 'Single Use Properties':           [9, 6, f'=COUNTIF(tbl_pros[{pros_lnks}],1)']
             , 'Single Use Tags':                 [9, 7, f'=COUNTIF(tbl_tags[{tags_lnks}],1)']
             }

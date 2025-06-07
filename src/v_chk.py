@@ -1,7 +1,13 @@
 import re
+import copy
+import yaml
+from pathlib import Path
 
-from v_chk_wb_tabs import *
-from v_chk_xl import *
+from v_chk_wb_setup import WbDataDef
+from v_chk_wb_tabs import NewWb
+from v_chk_xl import ExcelExporter
+from v_chk_class_lib import PluginMan
+
 
 # This s/b WbDataDef and v_chk should just instantiate the system.
 class VaultHealthCheck:   # WbConfig
@@ -93,7 +99,7 @@ class VaultHealthCheck:   # WbConfig
                     continue  # this only exits this for loop
             if x_dir_test:
                 self.ctot[2] += 1
-                print(f"Skipping file: {md_file} is in dirs_skip_rel_str")
+                # print(f"Skipping file: {md_file} is in dirs_skip_rel_str")
                 continue # this gets the next file...
 
             if self.DBUG_LVL > 2:
@@ -476,7 +482,7 @@ class VaultHealthCheck:   # WbConfig
 if __name__ == "__main__":
         # v_wb = WbDataDef()
         # t_wb = NewWb()
-    DBUG_LVL = 0
+    DBUG_LVL = -1
         # self.DBUG_LVL = 0  # Do Not print anything
         # self.DBUG_LVL = 1  # print report level actions only (export, load, save, etc.) + all lower levels
         # self.DBUG_LVL = 2  # print object level actions + all lower levels

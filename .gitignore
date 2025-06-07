@@ -77,8 +77,10 @@ fabric.properties
 # Android studio 3.1+ serialized cache file
 .idea/caches/build_file_checksums.ser
 
+# specific to my v_chk dev
 .venv
 xcluded
 data
 __pycache__
+desktop.ini
 

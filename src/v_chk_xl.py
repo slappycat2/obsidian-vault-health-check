@@ -1,23 +1,23 @@
 import sys
+import os
 import time
-from subprocess import Popen
 import urllib.parse
 import copy
 import re
 
+from datetime import datetime
+from pathlib import Path
+from subprocess import Popen
+
 import openpyxl
 from openpyxl.formatting.rule import CellIsRule  # , ColorScaleRule, FormulaRule
-
 from openpyxl.styles import Alignment, Font, Border, Side, PatternFill
-from openpyxl.worksheet import cell_range
 from openpyxl.worksheet.table import Table, TableStyleInfo
 from openpyxl.drawing.image import Image
 from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
 
-from v_chk_wb_setup import *
-from v_chk_class_lib import *
-
-
+from v_chk_wb_setup import WbDataDef
+from v_chk_class_lib import PluginMan, Colors
 # WIP
 # Todo: Bug-019 - File Count in Properties is really, meaningless. it's files * values
 #                 Look for more like this!
@@ -674,7 +674,7 @@ class ExcelExporter:
             c_sz = 10
 
         if c_font == '' or c_font is None:
-            c_font = "default"
+            c_font = "Arial"
 
         fg_clr = txt_clr
         if fill_clr != "" and fill_clr is not None:
