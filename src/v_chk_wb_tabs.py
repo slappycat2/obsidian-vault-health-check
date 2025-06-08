@@ -524,10 +524,11 @@ class NewTab:
         self.calc_col_pointers()
         self.files_cols_def()
         
-    def get_links_cols(self, limit, max):
-        if limit == 0:
-            return max
-        return min(limit, max)
+    @staticmethod
+    def get_links_cols(lnks_limit, lnks_max):
+        if lnks_limit == 0:
+            return lnks_max
+        return min(lnks_limit, lnks_max)
         
     def files_cols_def(self):
         # If there are add`l columns for Files "Where used", add them to the tab_def

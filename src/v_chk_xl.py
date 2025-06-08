@@ -789,7 +789,8 @@ class ExcelExporter:
 
         return obs_link
 
-    def web_hyperlink(self, file):
+    @staticmethod
+    def web_hyperlink(file):
         file_link = f"{urllib.parse.quote(file, safe=':/')}"
         web_link_text = file
         web_link = f'=hyperlink("{file_link}","{web_link_text}")'
@@ -835,14 +836,16 @@ class ExcelExporter:
 
         return cell_value
 
-    def xl_a_col(self, col_num):
+    @staticmethod
+    def xl_a_col(col_num):
         col_alpha = ""
         while col_num > 0:
             col_num, remainder = divmod(col_num - 1, 26)
             col_alpha = chr(65 + remainder) + col_alpha
         return col_alpha
 
-    def xl_set_border(self, ws, b_parms):
+    @staticmethod
+    def xl_set_border(ws, b_parms):
         """
         Sets borders for a specified cell range in a worksheet with customizable options
         for border type, color, and sides.
@@ -877,11 +880,11 @@ class ExcelExporter:
         """
 
         cell_range, border_type, color, sides = b_parms
-        if border_type == None or border_type == "":
+        if border_type is None or border_type == "":
             border_type = "thin"
-        if color == None or color == "":
+        if color is None or color == "":
             color = "000000"
-        if sides == None or sides == "":
+        if sides is None or sides == "":
             sides = "all"
 
         sides = sides.lower()

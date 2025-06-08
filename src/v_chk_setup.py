@@ -11,6 +11,7 @@ import json
 
 class SysConfig:
     def __init__(self, dbug_lvl=0):
+
         self.vault_id       = ""
         self.dir_vault     = ""
         self.pn_wb_exec   = ""
@@ -57,6 +58,26 @@ class SysConfig:
 
         self.link_lim_vals = 0  # Values Tab Maximum Links
         self.link_lim_tags = 0  # Tags Tab Maximum Links
+
+        # stuff used in tkinter
+        self.root = None
+        self.dir_vault_var = None
+        self.pn_wb_exec_var = None
+        self.dirs_skip_rel_str_var = None
+        self.bool_shw_notes_var = None
+        self.bool_rel_paths_var = None
+        self.bool_summ_rows_var = None
+        self.bool_unused_1_var = None
+        self.bool_unused_2_var = None
+        self.bool_unused_3_var = None
+        self.dir_vault_status = None
+        self.wb_exec_status = None
+        self.dirs_skip_rel_str_status = None
+        self.link_lim_vals_var = None
+        self.link_lim_vals_label = None
+        self.link_lim_tags_var = None
+        self.link_lim_tags_label = None
+        self.save_button = None
 
         self.cfg = {}
 
@@ -211,7 +232,8 @@ class SysConfig:
         self.link_lim_vals = self.cfg.get('link_lim_vals', 0)
         self.link_lim_tags = self.cfg.get('link_lim_tags', 0)
 
-    def validate_vault_id(self, vault_id):
+    @staticmethod
+    def validate_vault_id(vault_id):
         """Validate Obsidian Vault ID"""
         if not vault_id or not vault_id.strip():
             return False, "Vault ID cannot be empty"
@@ -222,7 +244,8 @@ class SysConfig:
 
         return True, ""
 
-    def validate_dir_vault(self, dir_vault):
+    @staticmethod
+    def validate_dir_vault(dir_vault):
         """Validate Obsidian Vault File Path"""
         if not dir_vault or not dir_vault.strip():
             return False, "Vault path cannot be empty"
@@ -236,7 +259,8 @@ class SysConfig:
 
         return True, ""
 
-    def validate_dirs_skip_rel_str(self, dirs_skip_rel_str, dir_vault):
+    @staticmethod
+    def validate_dirs_skip_rel_str(dirs_skip_rel_str, dir_vault):
         """Validate directories to ignore"""
         if not dirs_skip_rel_str or not dirs_skip_rel_str.strip():
             return True, ""  # Empty is valid
@@ -265,7 +289,8 @@ class SysConfig:
 
         return True, ""
 
-    def validate_pn_wb_exec(self, pn_wb_exec):
+    @staticmethod
+    def validate_pn_wb_exec(pn_wb_exec):
         """Validate spreadsheet executable path"""
         if not pn_wb_exec or not pn_wb_exec.strip():
             return False, "Executable path cannot be empty"

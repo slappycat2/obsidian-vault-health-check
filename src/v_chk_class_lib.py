@@ -1,10 +1,5 @@
-# Classes for v_chk and wb_export
-# from src.v_chk_cfg_data import WbDataDef, DataDefinition
-
 
 class Colors:
-
-
     # There are 16 million colors, these are ones I picked to play with,
     def __init__(self):
         """
@@ -124,7 +119,8 @@ class Colors:
     def get_base_clr(self, hex_clr):
         return self.tbl_txts[hex_clr][1]
 
-    def init_tbl_clrs(self):
+    @staticmethod
+    def init_tbl_clrs():
         clrs = {
             # Based on Excel Ion Theme (%' refers to whiteness-so light to dark)
             # shades         0         1         2         3         4         5
@@ -180,9 +176,6 @@ class Colors:
                     textclr = self.complement(textclr)
 
                 tbl_txts[val[i]] = [textclr, baseclr]
-
-                #if self.DBUG_LVL > 4:
-                #    print(f", '{val[i]}': ['{tbl_txts[val[i]][0]}', '{tbl_txts[val[i]][1]}']     # {clr}[{i}]")
 
         return tbl_txts
 
@@ -250,10 +243,6 @@ class Colors:
 
 from pathlib import Path
 import json
-# colorama, below is only for printing to the concole, in __main___
-# it has nothing to do with my Colors class.
-from colorama import just_fix_windows_console, Fore, Back, Style
-just_fix_windows_console()
 
 class PluginMan:
 
@@ -386,95 +375,15 @@ class PluginMan:
                 print(f"  mj_file: {mj_file}")
                 raise Exception(f"PluginMan: get_plugs_lib-Error: {e}")
 
-            # self.id                 = mj_data["id"]
-            # self.name               = mj_data["name"]
-            # self.version            = mj_data["version"]
-            # self.minAppVersion      = mj_data["minAppVersion"]
-            # self.description        = mj_data["description"]
-            # self.author             = mj_data["author"]
-            # self.authorUrl          = mj_data["authorUrl"]
-            # self.helpUrl            = mj_data["helpUrl"]
 
-            # for example...
-            # "id": "dataview",
-            # "name": "Dataview",
-            # "version": "0.5.67",
-            # "minAppVersion": "0.13.11",
-            # "description": "Complex data views for the data-obsessed.",
-            # "author": "Michael Brenan <blacksmithgu@gmail.com>",
-            # "authorUrl": "https://github.com/blacksmithgu",
-            # "helpUrl": "https://blacksmithgu.github.io/obsidian-dataview/",
-
-if __name__ == "__main__":
-    DBUG_LVL = 99
-    a = Colors(DBUG_LVL)
-
-    # DBUG_LVL = 91
-    # v_path = "E:\\o2"
-    #
-    # plugin_lib = PluginMan(v_path)
-    # # x = list(p)
-    # # print(x)
-    #
-    # cb_list = ['ccard', 'dataviewjs', 'asifjiwqj', "", 'TEST']
-    # for cb_sig in cb_list:
-    #     plugin_id = plugin_lib.get_name(cb_sig)
-    #     print(f"{cb_sig: <20} {plugin_id}")
-    #
-    # if DBUG_LVL > 90:
-    #     plen = {}
-    #     lin = "=" * 80
-    #     print(f"\n{lin}")
-    #     # self.tab_def['tab_cd_table_hdr']['Row']
-    #     print(f"\nVault in path: {v_path}")
-    #
-    #     for p_id in plugin_lib:
-    #         l = f"{len(plugin_lib[p_id]):03d}"
-    #         plen_id = f"{l}-{p_id}"
-    #         plen[plen_id] = p_id
-    #         # print(f"\n{p_id} {l} {lin}")
-    #         # for k,v in p[p_id].items():
-    #         #     k_name = f"{p_id}['{k}']"
-    #         #     print(f"{k_name: <20}: {v}")
-    #
-    #     # Colorama Standard Colors:
-    #     # Fore: BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, RESET.
-    #     # Back: BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, RESET.
-    #     # Fore: LIGHTBLACK_EX, LIGHTRED_EX, LIGHTGREEN_EX, LIGHTYELLOW_EX, LIGHTBLUE_EX, LIGHTMAGENTA_EX, LIGHTCYAN_EX, LIGHTWHITE_EX
-    #     # Back: LIGHTBLACK_EX, LIGHTRED_EX, LIGHTGREEN_EX, LIGHTYELLOW_EX, LIGHTBLUE_EX, LIGHTMAGENTA_EX, LIGHTCYAN_EX, LIGHTWHITE_EX
-    #     # Style: DIM, NORMAL, BRIGHT, RESET_ALL
-    #
-    #     existing_keys = set()  # create empty set, for unique keys
-    #     for k, v in sorted(plen.items(), reverse=True):
-    #         print(f"\n{k} {lin}")
-    #         for k1, v1 in plugin_lib[v].items():
-    #             if k1 not in existing_keys:
-    #                 existing_keys.add(k1)
-    #                 print(f"{Fore.LIGHTYELLOW_EX}{k1: <30}: {v1}")
-    #             else:
-    #                 print(f"{k1: <30}: {v1}")
-    #             print(Style.RESET_ALL, end='')
-    #
-    #     x = len(existing_keys) - 1
-    #     print(Fore.LIGHTCYAN_EX, end='')
-    #     print(f"\ntotal keys: {x}")
-    #     for k in sorted(existing_keys):
-    #         if k != 'plugin_dir':
-    #             print(f"{k: <30}")
-    #
-    #     print(f"\n\n{lin}")
-    #
-    #     for p in plugin_lib.plugins:
-    #         pid = plugin_lib.plugins[p]
-    #         # print(pid)
-    #         # o_files.setdefault(fkey, {ukey: [self.actual_prop_key]})
-    #         if 'minAppVersion' not in pid:
-    #             pid['minAppVersion'] = ''
-    #         if 'author' not in pid:
-    #             pid['author'] = ''
-    #         if 'authorUrl' not in pid:
-    #             pid['authorUrl'] = ''
-    #
-    #         print(f"{pid['id']}^{pid['name']}^{pid['version']}^{pid['minAppVersion']}^{pid['author']}^{pid['authorUrl']}^{pid['isDesktopOnly']}^{pid['description']}")
+def main() -> None:
+    pass
 
     print(f'\nStandalone run of "{Path(__file__).name}" complete.')
+
+
+if __name__ == '__main__':
+    main()
+
+
+

@@ -19,6 +19,12 @@ class WbDataDef:
         self.wb_data = {}
 
         self.OPEN_ON_CREATE = True
+        self.pn_batch = None
+        self.pn_wbs = None
+        self.pn_batch = None
+        self.pn_wbs = None
+        self.tab_def = None
+        self.summ = None
 
         self.obs_props = {}
         self.obs_atags = {}

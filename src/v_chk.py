@@ -58,7 +58,7 @@ class VaultHealthCheck:   # WbConfig
         self.rgx_wikilinks = re.compile(r"\[\[.*?\]\]", re.MULTILINE)
 
         self.filepath = ""
-        self.inline = "F"
+        self.prop_loc_F_I = "F"
         self.actual_prop_key = ""
         self.plugin_id = ""
         self.ctot = [0] * 13
@@ -407,7 +407,7 @@ class VaultHealthCheck:   # WbConfig
         return yaml_text, body_text
 
     @staticmethod
-    def extract_codeblock_info(a_codeblock) -> tuple:
+    def extract_codeblock_info(a_codeblock) -> str:
         """
         Extracts detailed information from a code block input.
 
@@ -430,22 +430,8 @@ class VaultHealthCheck:   # WbConfig
         cb_sig = a_codeblock.split('\n')[0].strip('`').upper()  # 1st line (w/o ```)
         cb_sig.upper()
 
-        # cb_action = ''
-        # if len(a_codeblock.split('\n')) < 2:
-        #     return cb_sig, ''
-        # for ln in a_codeblock[1:].split('\n'):
-        #     if ln.strip() != '':
-        #         cb_action = ln.strip()
-        #         break
-        #
-        # if cb_sig == 'BUTTON':
-        #     cb_action = ' '.join(cb_action.split(' ')[1:])  # get button text
-        # elif cb_sig == 'DATAVIEW':
-        #     cb_action = ''.join(cb_action.split(' ')[0])  # get DV Output Format
-        #     cb_action = cb_action.upper()
-
-        if cb_sig is None or cb_sig == '':
-            cb_sig = 'CodeBlock'
+        # if cb_sig is None or cb_sig == '':
+        #     cb_sig = 'CodeBlock'
 
         # if cb_action is None or cb_action == '':
         #     cb_action = 'Undefined'
