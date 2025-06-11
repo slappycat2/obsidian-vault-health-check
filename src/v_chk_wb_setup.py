@@ -1,9 +1,8 @@
 import glob
-import json
 import sys
 
-from v_chk_setup import *
-from v_chk_class_lib import Colors
+from src.v_chk_setup import *
+from src.v_chk_class_lib import Colors
 
 class WbDataDef:
     def __init__(self, sys_id, dbug_lvl=0):
@@ -78,11 +77,11 @@ class WbDataDef:
         """Returns the name of the latest (most recent) file
         of the path_pattern_lst
         requires: path_pattern_lst - a list formatted as:
-        ["G:\\dev\\v_chk\\data\\batch_files\\", "v_chk_*.yaml"]
+        ["G:/dev/v_chk/data/batch_files/", "v_chk_*.yaml"]
         """
 
-        latest_file = f"{self.dir_batch}\\{self.cfg_sys_id}_0000.yaml"
-        full_path = f"{self.dir_batch}\\{self.cfg_sys_id}_????.yaml"
+        latest_file = f"{self.dir_batch}/{self.cfg_sys_id}_0000.yaml"
+        full_path = f"{self.dir_batch}/{self.cfg_sys_id}_????.yaml"
         try:
             list_of_files = glob.iglob(full_path)
             if not list_of_files:
@@ -95,7 +94,7 @@ class WbDataDef:
             raise Exception(f"ConfigData: Error reading config file ({self.pn_batch}) Error : {e}")
 
         self.pn_batch = latest_file
-        self.pn_wbs = f"{self.dir_wbs}\\{Path(latest_file).stem}.xlsx"
+        self.pn_wbs = f"{self.dir_wbs}/{Path(latest_file).stem}.xlsx"
         if self.DBUG_LVL > 1:
             print(f"ConfigData: Read Last Config file: {self.pn_batch}")
         # Add these to the wb_def (not the sys file!)
@@ -109,7 +108,7 @@ class WbDataDef:
         """Returns the name of the next available yaml config file
         using the path filename stub_provided.
         requires: path_stub formatted as:
-        ["G:\\dev\\v_chk\\data\\batch_files\\"]
+        ["G:/dev/v_chk/data/batch_files/"]
         """
         self.bat_num = 0
         c_file = f"{self.dir_batch}{self.cfg_sys_id}_{self.bat_num:04d}.yaml"

@@ -9,20 +9,26 @@ import subprocess
 import platform
 import json
 
+from typing import Tuple, List, Dict, Any
+
+from src.v_chk_class_lib import ObsidianApp
+
+
 class SysConfig:
     def __init__(self, dbug_lvl=0):
-
-        self.vault_id       = ""
-        self.dir_vault     = ""
-        self.pn_wb_exec   = ""
         self.DBUG_LVL = dbug_lvl
+        self.vault_id     = ""
+        self.dir_vault    = ""
+        self.pn_wb_exec   = ""
+        self.obs_app_obj = ObsidianApp()
+        self.cfg_os = platform.system()
         self.cfg_sys_id = 'v_chk'
         self.cfg_sys_ver = "0.7"
         # Instantiate default values, presumably overridden in read_cfg_sys
         self.c_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.sys_dir = f"{Path(__file__).parent.parent.absolute()}\\"
-        self.dir_batch = f"{self.sys_dir}data\\batch_files\\"
-        self.dir_wbs = f"{self.sys_dir}data\\workbooks\\"
+        self.sys_dir = f"{Path(__file__).parent.parent.absolute()}/"
+        self.dir_batch = f"{self.sys_dir}data/batch_files/"
+        self.dir_wbs = f"{self.sys_dir}data/workbooks/"
         self.tab_seq = [ 'pros'   # ONLY USED FOR NEW INSTALL! This is defined in CONFIG.yaml
                        , 'vals'
                        , 'tags'
@@ -121,7 +127,7 @@ class SysConfig:
         os.makedirs(path)
 
     def get_templates_dir(self):
-        template_cfg_file = f"{self.dir_vault}\\.obsidian\\plugins\\templater-obsidian\\data.json"
+        template_cfg_file = f"{self.dir_vault}/.obsidian/plugins/templater-obsidian/data.json"
         try:
             if os.path.isfile(template_cfg_file):
                 with open(template_cfg_file, 'r') as f:
@@ -167,7 +173,7 @@ class SysConfig:
             self.dir_templates = self.get_templates_dir()
 
         self.dirs_dot = [f.name for f in os.scandir(self.dir_vault) if
-                         f.is_dir() and f.path.startswith(f"{self.dir_vault}\\.")]
+                         f.is_dir() and f.path.startswith(f"{self.dir_vault}/.")]
 
         dirs = [d.strip() for d in self.dirs_skip_rel_str.split(',') if d.strip()]
         self.dirs_skip_abs_lst = []
@@ -211,8 +217,8 @@ class SysConfig:
         self.cfg_sys_id         = self.cfg.get('cfg_sys_id', 'v_chk')
         self.cfg_sys_ver        = self.cfg.get('cfg_sys_ver', '0.7')
         self.c_date             = self.cfg.get('c_date', datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-        self.dir_batch            = self.cfg.get('dir_batch', f"{self.sys_dir}data\\batch_files\\")
-        self.dir_wbs            = self.cfg.get('dir_wbs', f"{self.sys_dir}data\\workbooks\\")
+        self.dir_batch            = self.cfg.get('dir_batch', f"{self.sys_dir}data/batch_files/")
+        self.dir_wbs            = self.cfg.get('dir_wbs', f"{self.sys_dir}data/workbooks/")
         self.dir_templates            = self.cfg.get('dir_templates', self.get_templates_dir())
         self.tab_seq            = self.cfg.get('tab_seq', '')
         self.ctot               = self.cfg.get('ctot', '')
@@ -324,7 +330,7 @@ class SysConfig:
             title="Select Spreadsheet Executable",
             initialdir=os.path.dirname(self.pn_wb_exec) if self.pn_wb_exec else "/",
             filetypes=[
-                ("Executable files", "*.exe" if platform.system() == "Windows" else "*"),
+                ("Executable files", "*.exe" if self.cfg_os == "Windows" else "*"),
                 ("All files", "*.*")
             ]
         )
@@ -405,7 +411,7 @@ class SysConfig:
         self.root.title("Obsidian Vault Health Check")
         self.root.geometry("700x600")
         self.root.resizable(True, True)
-        self.root.iconbitmap('..\\img\\swenlogo.ico')
+        self.root.iconbitmap('../img/swenlogo.ico')
 
         # Create main frame with scrollbar
         canvas = tk.Canvas(self.root)

@@ -16,8 +16,8 @@ from openpyxl.worksheet.table import Table, TableStyleInfo
 from openpyxl.drawing.image import Image
 from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
 
-from v_chk_wb_setup import WbDataDef
-from v_chk_class_lib import PluginMan, Colors
+from src.v_chk_wb_setup import WbDataDef
+from src.v_chk_class_lib import PluginMan, Colors, ObsidianApp
 # WIP
 # Todo: Bug-019 - File Count in Properties is really, meaningless. it's files * values
 #                 Look for more like this!
@@ -124,7 +124,7 @@ class ExcelExporter:
         self.tab_id_sub_key = ''
         self.tabs_built = {}
         self.wb_tabs_done = {}
-
+        self.obs_app_obj = ObsidianApp()
         cfg_setup = WbDataDef(self.DBUG_LVL)
         self.xyml_descs = cfg_setup.xyml_descs
 
@@ -331,7 +331,7 @@ class ExcelExporter:
         for src in data_src:
             tab_data_src = tab_data_src[src]
 
-        for prop_name, values_dict in sorted(tab_data_src.items()):
+        for prop_name, values_dict in tab_data_src.items():
 
             if tab_id == 'summ':
                 continue
@@ -783,6 +783,17 @@ class ExcelExporter:
         return pid
 
     def obs_hyperlink(self, file):
+    # vault can be either the vault name, or the vault ID.
+    # The vault name is simply the name of the vault folder.
+    # The vault ID is the random 16-character code assigned to the vault.
+        # This ID is unique per folder on your computer. Example: ef6ca3e3b524d22f.
+        # There isn't an easy way to find this ID yet, one will be offered at a
+        # later date in the vault switcher. Currently it can be found in
+        # %appdata%/obsidian/obsidian.json for Windows.
+        # For MacOS, replace
+        #   %appdata% with ~/Library/Application Support/.
+        # For Linux, replace
+        #   %appdata% with ~/.config/.
         file_link = f"{urllib.parse.quote(file, safe=':/')}"
         obs_link_text = file.replace(".md", "")
         obs_link = f'=hyperlink("obsidian://open?vault={self.vault_id}&file={file_link}","{obs_link_text}")'

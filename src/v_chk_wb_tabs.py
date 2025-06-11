@@ -1,7 +1,7 @@
 from openpyxl.styles import Side
 import copy
-from v_chk_wb_setup import WbDataDef
-from v_chk_class_lib import Colors
+from src.v_chk_wb_setup import WbDataDef
+from src.v_chk_class_lib import Colors
 
 class NewWb(WbDataDef):
     def __init__(self, dbug_lvl):
@@ -15,7 +15,7 @@ class NewWb(WbDataDef):
         self.ctot = self.cfg['ctot']
         self.Colors = Colors()
 
-        if self.DBUG_LVL >= 0:
+        if self.DBUG_LVL > 0:
             print("Loading Workbook Tab Definitions...")
 
         # Notes and hlp_txt s/b a max of 80 chars; Comments, no more than 3 lines.
@@ -1367,7 +1367,7 @@ class DefPlug(NewTab):
 
             # col=0 means next col, row = 0 means same row
              'summ-title':         [ 3,  5, '', 14, 32, txt1, clr1, True, False,  'left', 'Analysis']
-            , 'Total':          [ 0, 0, '',  12, 15, txt1, clr1, True, False,  'center', 'Total']
+            , 'Total':          [ 0, 0, '',  sz, 15, txt1, clr1, True, False,  'center', 'Totals']
 
             , 'Plugins':        [ 3, 6, '',  sz, 0, txt2, clr2, True, False,  'right',  self.col_key1]
             , 'x-ctot-key1':    [ 0, 0, '',  sz, 0, "", "",     False, False, 'center', self.f_txt_key1]
@@ -1583,8 +1583,6 @@ class DefSumm(NewTab):
             def_val = [ 0, 0, '', 11, 0, '', '', False, False, 'right', val[2]]
             self.tab_def['tab_cd_fixed_grid'][uniq_key] = def_key
             self.tab_def['tab_cd_fixed_grid'][uniq_val] = def_val
-
-
 
         self.tab_def['borders'] = {
               'footer':["C31:J31", "thin",  self.colors.clr_blk, "top"]

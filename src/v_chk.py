@@ -1,13 +1,29 @@
 import re
 import copy
+import sys
+from time import sleep
+
 import yaml
 from pathlib import Path
 
-from v_chk_wb_setup import WbDataDef
-from v_chk_wb_tabs import NewWb
-from v_chk_xl import ExcelExporter
-from v_chk_class_lib import PluginMan
+from src.v_chk_wb_setup import WbDataDef
+from src.v_chk_wb_tabs import NewWb
+from src.v_chk_xl import ExcelExporter
+from src.v_chk_class_lib import PluginMan
 
+import tkinter as tk
+from tkinter import ttk
+from PIL import Image, ImageTk
+import time
+import os
+
+SPLASH_Test = False
+# SPLASH_BG = '#B01513'  # Summary Tab Red
+# SPLASH_BG = '#6666FF'  # Dark pastel blue
+# SPLASH_BG = '#3333CC'  # Dark blue
+# SPLASH_BG = '#001166'  # royal blue
+SPLASH_BG = '#800000'  # Maroon
+LOGO_PATH = os.path.abspath(os.path.join("..", "img", "swenlogoicon.png"))
 
 # This s/b WbDataDef and v_chk should just instantiate the system.
 class VaultHealthCheck:   # WbConfig
@@ -29,7 +45,7 @@ class VaultHealthCheck:   # WbConfig
         # self.DBUG_LVL = 9  # print everything (includes export_cell!)
         self.key_stack = []
         # self.cfg_setup = WbDataDef(DBUG_LVL)
-        self.wb_data_obj = WbDataDef(DBUG_LVL)
+        self.wb_data_obj = WbDataDef(self.DBUG_LVL)
 
         self.wb_data_obj.get_next_bat()     # this initials wb_data
         self.plugin_id_def = self.wb_data_obj.plugin_id_def
@@ -105,6 +121,9 @@ class VaultHealthCheck:   # WbConfig
             if self.DBUG_LVL > 2:
                 print(f"Processing file: {md_file}")
 
+            if 'My Vision Board Example' in str(md_file):
+                print(f"Processing file: {md_file}")
+
             md_pname = str(md_file)
             self.process_md_file(md_pname)
 
@@ -137,8 +156,8 @@ class VaultHealthCheck:   # WbConfig
 
         self.upd_obs_props(self.obs_dupfn, 'dupfn', Path(filepath).name, filepath)
         self.ctot[3] += 1
-        if self.DBUG_LVL > 2:
-            print(f"Processing file: {self.filepath}")
+        # if self.DBUG_LVL > 2:
+        #     print(f"Processing file: {self.filepath}")
         self.parse_file()
 
         # self.obs_files[self.filepath] = self.file_pros
@@ -332,7 +351,7 @@ class VaultHealthCheck:   # WbConfig
         return
 
     def upd_val(self, k, v):
-        if k == "tags":
+        if k == "tags" and v is not None:
             v = v.lower()
 
         if self.plugin_id != "":
@@ -465,8 +484,7 @@ class VaultHealthCheck:   # WbConfig
 
         return pmax
 
-if __name__ == "__main__":
-        # v_wb = WbDataDef()
+def debugging_dump():        # v_wb = WbDataDef()
         # t_wb = NewWb()
     DBUG_LVL = -1
         # self.DBUG_LVL = 0  # Do Not print anything
@@ -519,3 +537,108 @@ if __name__ == "__main__":
                 print(f"{k_name: <20}: {v}")
 
         print(f'\nStandalone run of "{Path(__file__).name}" complete.')
+
+class SplashScreen(tk.Tk):
+    def __init__(self, logo_path, title="Obsidian Vault Health Check", version="v1.0"):
+        super().__init__()
+        self.title = title
+        self.version = version
+        self.overrideredirect(True) # Remove window decorations for splash effect
+        self.configure(bg=SPLASH_BG)
+        self.logo_img = self.load_logo(logo_path)
+        self.logo_label = tk.Label(self, image=self.logo_img, bg=SPLASH_BG)
+        self.logo_label.pack(expand=True)
+
+        # Title and version
+        title_label = tk.Label(self, text=self.title,
+                               font=('Arial', 16, 'bold'),
+                               fg='white', bg=SPLASH_BG)
+        title_label.pack(pady=(10, 5))
+
+        version_label = tk.Label(self, text=self.version,
+                                 font=('Arial', 10),
+                                 fg='white', bg=SPLASH_BG)
+        version_label.pack()
+
+        self.status_var = tk.StringVar()
+        self.status_label = tk.Label(self, textvariable=self.status_var, anchor="sw",
+                                     bg=SPLASH_BG, fg="white", font=("Arial", 10))
+        self.status_label.pack(side="bottom", anchor="sw", padx=10, pady=10, fill="x")
+
+        self.progress = ttk.Progressbar(self, orient="horizontal", mode="determinate", length=300)
+        self.progress.pack(side="bottom", pady=10)
+        self.progress["value"] = 0
+        self.progress["maximum"] = 100
+
+        self.center_window(400, 300)
+
+    def load_logo(self, path):
+        img = Image.open(path)
+        img = img.resize((128, 128), Image.LANCZOS)
+        return ImageTk.PhotoImage(img)
+
+    def center_window(self, w, h):
+        self.update_idletasks()
+        ws = self.winfo_screenwidth()
+        hs = self.winfo_screenheight()
+        x = (ws // 2) - (w // 2)
+        y = (hs // 2) - (h // 2)
+        self.geometry(f"{w}x{h}+{x}+{y}")
+
+    def update_status(self, text, progress_value=None):
+        self.status_var.set(text)
+        if progress_value is not None:
+            self.progress["value"] = progress_value
+        self.update_idletasks()
+
+
+def main():
+    splash = SplashScreen(LOGO_PATH)
+    splash.update_status("Starting Vault Health Check...", 0)
+    splash.after(500, lambda: run_main(splash))
+    splash.mainloop()
+
+
+def run_main(splash):
+    DBUG_LVL = 0
+    phase_txt = [
+        "Initializing Vault Health Check...",
+        "Gathering Vault Statistics...",
+        "Building Workbook Tab Structure...",
+        "Generating Workbook...",
+        "Done. Launching workbook application..."
+    ]
+    phase_pct = [10, 20, 50, 70, 100]
+    splash.update_status(phase_txt[0], phase_pct[0])
+    # vc_def = VaultHealthCheck(DBUG_LVL)
+    # tabs = NewWb(DBUG_LVL)
+    # exporter = ExcelExporter(DBUG_LVL)
+    # exporter.export(DBUG_LVL)
+    if SPLASH_Test:
+        for i in range(5):
+            splash.update_status(phase_txt[i], phase_pct[i])
+            sleep(5)
+
+        splash.destroy()
+        sys.exit()
+
+    # try:
+    splash.update_status(phase_txt[1], phase_pct[1])
+    DBUG_LVL = 99
+    vc_obj = VaultHealthCheck(DBUG_LVL)
+    splash.update_status(phase_txt[2], phase_pct[2])
+    wb_obj = NewWb(DBUG_LVL)
+    splash.update_status(phase_txt[3], phase_pct[3])
+    exporter = ExcelExporter(DBUG_LVL)
+    exporter.export(DBUG_LVL)
+    splash.update_status(phase_txt[4], phase_pct[4])
+    time.sleep(1)
+    # except Exception as e:
+    #    splash.update_status(f"Error: {e}")
+    #    time.sleep(20)
+    # finally:
+    splash.destroy()
+
+
+if __name__ == "__main__":
+    main()

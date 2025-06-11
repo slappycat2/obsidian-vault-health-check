@@ -1,3 +1,35 @@
+import platform
+import os
+
+from pathlib import Path
+import json
+
+class JsonFile:
+    """
+    JsonFile class is used to load a JSON file and store its contents.
+    Attributes:
+        json_path (str): Path to the JSON file.
+        json_data (dict): Parsed JSON data.
+        err_msg (str): Error message if any exception occurs during loading.
+    """
+    def __init__(self, json_path: str):
+        self.json_path = json_path
+        self.json_data = {}
+        self.err_msg = ''
+
+        try:
+            with open(self.json_path, 'r', encoding='utf8') as f:
+                self.json_data = json.load(f)
+
+        except FileNotFoundError:
+            self.err_msg = f"Exception: {json_path} not found. "
+
+        except json.JSONDecodeError:
+            self.err_msg = f"Exception: {json_path} is not a valid JSON file. "
+
+        except Exception as e:
+            raise Exception(f"JsonFile: load_json_file attempting to read: ({json_path}) - Error: {e}")
+
 
 class Colors:
     # There are 16 million colors, these are ones I picked to play with,
@@ -241,11 +273,7 @@ class Colors:
 
 # End of Colors Class ==================================================================
 
-from pathlib import Path
-import json
-
 class PluginMan:
-
     def __init__(self, v_path=None):
         self.v_path = v_path
         self.DBUG_LVL = 0
@@ -271,7 +299,7 @@ class PluginMan:
             , 'todoist': 'todoist-sync-plugin'
             , 'tracker': 'obsidian-tracker'
         }
-        if v_path is not None:
+        if self.v_path is not None:
             self.get_plugs_lib()
             self.get_obs_plugs()
 
@@ -334,19 +362,15 @@ class PluginMan:
         return self.obs_plugs
 
     def get_plugs_lib(self):
-        o_path = f"{self.v_path}\\.obsidian\\"
-        v_path = f"{o_path}plugins\\"
+        o_path = f"{self.v_path}/.obsidian/"
+        v_path = f"{o_path}plugins/"
         v_path_obj = Path(v_path)
         cp_json = f"{o_path}community-plugins.json"
         enabled_plugins = []
         # First, load the the list of enabled plugins from community_plugins.json
-        try:
-            with open(cp_json, 'r', encoding='utf8') as f:
-                enabled_plugins = json.load(f)
-
-        except Exception as e:
-            print(f"Error: {e}")
-            raise Exception(f"PluginMan: {e}")
+        enabled_plugins = JsonFile(cp_json)
+        if enabled_plugins.err_msg:
+            print(f"PluginMan: get_plugs_lib-Error: {enabled_plugins.err_msg}")
 
         # Now, load the plugin descriptions from each manifest.json files
         #   These are the INSTALLED plugins.
@@ -375,6 +399,50 @@ class PluginMan:
                 print(f"  mj_file: {mj_file}")
                 raise Exception(f"PluginMan: get_plugs_lib-Error: {e}")
 
+class ObsidianApp:
+    """
+    ObsidianApp class is a placeholder for Obsidian application related methods.
+    Currently, it does not contain any methods or attributes.
+    possible platforms: Linux, Darwin, Windows
+    """
+    def __init__(self):
+        self.obs_platform = platform.system()
+        self.dir_obs_json = None
+        self.dir_obs_vault = None
+        self.pn_obs_json = None
+        self.obs_vaults = {}
+
+        home_dir = Path.home()
+        home_dir_str = str(home_dir)
+
+        if self.obs_platform == 'Windows':
+            home_dir_str = os.getenv('APPDATA', '')           # Not really Home, but it works for now...
+
+        obs_json_locs = {
+              'Linux': f'{home_dir_str}/.config/obsidian/'
+            , 'Darwin': f'{home_dir_str}/Library/Application Support/obsidian/'
+            , 'Windows': f'{home_dir_str}/obsidian/'
+        }
+
+        self.dir_obs_json = obs_json_locs.get(self.obs_platform, '')
+        self.pn_obs_json = f"{self.dir_obs_json}obsidian.json"
+        obs_json_obj = JsonFile(self.pn_obs_json)
+        if obs_json_obj.err_msg:
+            raise Exception(f"ObsidianApp: {obs_json_obj.err_msg}")
+
+        obs_json_dict = obs_json_obj.json_data
+        if 'vaults' not in obs_json_dict:
+            raise Exception(f"ObsidianApp: No vaults found in obsidian.json at {self.dir_obs_json}")
+
+        vaults_dict = obs_json_dict['vaults']
+
+        for vault_id, vault_dict in vaults_dict.items():
+            # if 'open' in vault_dict and vault_dict['open']:
+            if 'path' in vault_dict:
+                self.obs_vaults[vault_dict['path']] = vault_id
+
+        if not self.obs_vaults:
+            raise Exception(f"ObsidianApp: No Vaults with a 'path' key in obsidian.json")
 
 def main() -> None:
     pass

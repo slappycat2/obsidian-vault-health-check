@@ -10,9 +10,9 @@ from openpyxl.worksheet.table import Table, TableStyleInfo
 from openpyxl.styles import PatternFill
 from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
 
-from v_chk_cfg_data import *        # s/b color_study_data import *
-from v_chk_wb_tabs import *
-from v_chk_class_lib import *
+from src.v_chk_cfg_data import *        # s/b color_study_data import *
+from src.v_chk_wb_tabs import *
+from src.v_chk_class_lib import *
 
 def a51_dump_colors(self, cfg, wb, colors_tab):
     # Dump colors
