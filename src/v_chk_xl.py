@@ -51,7 +51,7 @@ from src.v_chk_class_lib import PluginMan, Colors, ObsidianApp
 # Todo: ER-013 - Identify Singular and Plural usages of properties and tags
 # Todo: ER-014 - Fix Area51 Table Dump
 # Todo: ER-015 - Rename dirs_skip_rel_str to dirs_skip_abs_lst_user
-# Todo: ER-0 -
+# Todo: ER-016 - Files needs Date Modified and Date Created columns
 # Todo: ER-0 -
 # Todo: ER-0 -
 # Todo: ER-0 -
@@ -327,11 +327,11 @@ class ExcelExporter:
         # TABLE-Dtl: Gathering data--Loop each prop_name, getting the list of all values
         # ==============================================================================
         # First, get the tabs data_src
-        tab_data_src = self.wb_def['wb_data']
+        tab_src_data = self.wb_def['wb_data']
         for src in data_src:
-            tab_data_src = tab_data_src[src]
+            tab_src_data = tab_src_data[src]
 
-        for prop_name, values_dict in tab_data_src.items():
+        for prop_name, values_dict in tab_src_data.items():
 
             if tab_id == 'summ':
                 continue

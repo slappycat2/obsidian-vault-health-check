@@ -368,9 +368,11 @@ class PluginMan:
         cp_json = f"{o_path}community-plugins.json"
         enabled_plugins = []
         # First, load the the list of enabled plugins from community_plugins.json
-        enabled_plugins = JsonFile(cp_json)
-        if enabled_plugins.err_msg:
-            print(f"PluginMan: get_plugs_lib-Error: {enabled_plugins.err_msg}")
+        enabled_plugins_obj = JsonFile(cp_json)
+        if enabled_plugins_obj.err_msg:
+            print(f"PluginMan: get_plugs_lib-Error: {enabled_plugins_obj.err_msg}")
+
+        enabled_plugins = enabled_plugins_obj.json_data
 
         # Now, load the plugin descriptions from each manifest.json files
         #   These are the INSTALLED plugins.
@@ -410,6 +412,7 @@ class ObsidianApp:
         self.dir_obs_json = None
         self.dir_obs_vault = None
         self.pn_obs_json = None
+        self.obs_vaults_open = []
         self.obs_vaults = {}
 
         home_dir = Path.home()
@@ -437,9 +440,10 @@ class ObsidianApp:
         vaults_dict = obs_json_dict['vaults']
 
         for vault_id, vault_dict in vaults_dict.items():
-            # if 'open' in vault_dict and vault_dict['open']:
             if 'path' in vault_dict:
                 self.obs_vaults[vault_dict['path']] = vault_id
+                if 'open' in vault_dict and vault_dict['open']:
+                    self.obs_vaults_open.append(vault_id)
 
         if not self.obs_vaults:
             raise Exception(f"ObsidianApp: No Vaults with a 'path' key in obsidian.json")

@@ -1030,7 +1030,6 @@ class DefCode(NewTab):
           # totals headers (across and down)
             'Notes-hdr':   [3, 12, '', sz,  0, txt1, clr1, True,  False, 'left',   'Notes: ']
 
-          , 'x-null-values':  [11,  8, '', 12, 0, self.colors.clr_red,  "", True, True,   'left',   self.f_null_values]
           , 'x-filters-on':   [ 5,  6, '', 12, 0, self.colors.clr_red,  "", True, True,   'left',   self.f_filters_on]
           # This one is for the IVisible Column, not the totals
           , 'isVisible':      [44, 0, '', sz, 0, clr2, clr2, False, False, 'right',  self.f_isVisible]
@@ -1730,7 +1729,7 @@ class DefAr51(NewTab):
 
         self.tab_def['tab_cd_fixed_grid']   = {  # [col,row,font,sz, w,t_clr,fill_clr,Bold,Ital,  Align,  val ] = 11
             # totals headers (across and down)
-              'Ctrl-Key':   [2, 20, '', 14, 48,   '', sea2, True,  False, 'left', 'Control totals from v_chk']
+              'Ctrl-Key':   [2, 20, '', 14, 48,   '', sea2, True,  False, 'left', 'Control totals from src.v_chk']
             , 'Ctrl-Val':   [0,  0, '', 10, 11,   '', sea2, True,  False, 'right', 'Totals']
             , 'Run-Bal':    [0,  0, '', 10, 10,   '', sea2, True,  False, 'right', 'Run Tot']
             , 'Zero-Bal':   [0,  0, '', 10, 13,   '', sea2, True,  False, 'center', 'Zero Bal Chk']

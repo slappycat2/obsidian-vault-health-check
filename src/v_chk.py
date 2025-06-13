@@ -6,6 +6,7 @@ from time import sleep
 import yaml
 from pathlib import Path
 
+from src.v_chk_setup import SysConfig
 from src.v_chk_wb_setup import WbDataDef
 from src.v_chk_wb_tabs import NewWb
 from src.v_chk_xl import ExcelExporter
@@ -593,6 +594,9 @@ class SplashScreen(tk.Tk):
 
 
 def main():
+    # Initialize configuration
+    config = SysConfig()
+
     splash = SplashScreen(LOGO_PATH)
     splash.update_status("Starting Vault Health Check...", 0)
     splash.after(500, lambda: run_main(splash))
