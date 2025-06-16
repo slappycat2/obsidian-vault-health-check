@@ -2,6 +2,7 @@ import os
 import yaml
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
+from PIL import Image, ImageTk
 from pathlib import Path
 from datetime import datetime
 import subprocess
@@ -12,28 +13,35 @@ from typing import Tuple, List, Dict, Any
 from src.v_chk_class_lib import ObsidianApp
 
 class SetupScreen:
-    def __init__(self, config: 'SysConfig'):
-        self.config = config
+    def __init__(self, cfg: 'SysConfig'):
+        self.cfg = cfg
+        self.vaults = self.cfg.o_app.obs_vaults
+        self.v_list = list(self.vaults.keys())
+        self.vault_id = self.cfg.vault_id
+        self.dir_vault = self.cfg.dir_vault
         self.root = tk.Tk()
         self.root.title("Obsidian Vault Health Check")
-        self.root.geometry("700x600")
-        self.root.resizable(True, True)
+        self.root.geometry("700x560")
+        self.root.resizable(False, False)
         self.root.iconbitmap('../img/swenlogo.ico')
+        self.logo_image = Image.open('../img/SwenLogo2.png').resize((200, 200))
+        self.frame_image = ImageTk.PhotoImage(self.logo_image)
+
 
         # Tkinter variables
-        self.dir_vault_var = tk.StringVar(value=self.config.dir_vault)
-        self.pn_wb_exec_var = tk.StringVar(value=self.config.pn_wb_exec)
-        self.dirs_skip_rel_str_var = tk.StringVar(value=self.config.dirs_skip_rel_str)
-        self.bool_shw_notes_var = tk.BooleanVar(value=self.config.bool_shw_notes)
-        self.bool_rel_paths_var = tk.BooleanVar(value=self.config.bool_rel_paths)
-        self.bool_summ_rows_var = tk.BooleanVar(value=self.config.bool_summ_rows)
-        self.bool_unused_1_var = tk.BooleanVar(value=self.config.bool_unused_1)
-        self.bool_unused_2_var = tk.BooleanVar(value=self.config.bool_unused_2)
-        self.bool_unused_3_var = tk.BooleanVar(value=self.config.bool_unused_3)
-        self.link_lim_vals_var = tk.StringVar(value=str(self.config.link_lim_vals))
-        self.link_lim_tags_var = tk.StringVar(value=str(self.config.link_lim_tags))
+        self.vault_name_var = tk.StringVar(value=self.cfg.vault_name)
+        self.pn_wb_exec_var = tk.StringVar(value=self.cfg.pn_wb_exec)
+        self.dirs_skip_rel_str_var = tk.StringVar(value=self.cfg.dirs_skip_rel_str)
+        self.bool_shw_notes_var = tk.BooleanVar(value=self.cfg.bool_shw_notes)
+        self.bool_rel_paths_var = tk.BooleanVar(value=self.cfg.bool_rel_paths)
+        self.bool_summ_rows_var = tk.BooleanVar(value=self.cfg.bool_summ_rows)
+        self.bool_unused_1_var = tk.BooleanVar(value=self.cfg.bool_unused_1)
+        self.bool_unused_2_var = tk.BooleanVar(value=self.cfg.bool_unused_2)
+        self.bool_unused_3_var = tk.BooleanVar(value=self.cfg.bool_unused_3)
+        self.link_lim_vals_var = tk.StringVar(value=str(self.cfg.link_lim_vals))
+        self.link_lim_tags_var = tk.StringVar(value=str(self.cfg.link_lim_tags))
 
-        self.dir_vault_status = None
+        # self.vault_name_status = None
         self.wb_exec_status = None
         self.dirs_skip_rel_str_status = None
         self.link_lim_vals_label = None
@@ -42,34 +50,54 @@ class SetupScreen:
 
     def show(self):
         canvas = tk.Canvas(self.root)
-        scrollbar = ttk.Scrollbar(self.root, orient="vertical", command=canvas.yview)
+        # scrollbar = ttk.Scrollbar(self.root, orient="vertical", command=canvas.yview)
         scrollable_frame = ttk.Frame(canvas)
         scrollable_frame.bind(
             "<Configure>",
             lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
         canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-        canvas.configure(yscrollcommand=scrollbar.set)
+        # canvas.configure(yscrollcommand=scrollbar.set)
         canvas.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
+        # scrollbar.pack(side="right", fill="y")
 
         main_frame = ttk.Frame(scrollable_frame, padding="20")
         main_frame.pack(fill="both", expand=True)
         main_frame.columnconfigure(1, weight=1)
         row = 0
 
-        # Vault Path
-        ttk.Label(main_frame, text="Obsidian Vault Path:").grid(row=row, column=0, sticky=tk.W, pady=5)
-        dir_vault_frame = ttk.Frame(main_frame)
-        dir_vault_frame.grid(row=row, column=1, sticky=(tk.W, tk.E), pady=5, padx=(10, 0))
-        dir_vault_frame.columnconfigure(0, weight=1)
-        dir_vault_entry = ttk.Combobox(dir_vault_frame, state="readonly")
-        dir_vault_entry['values'] = self.config.obs_vaults.keys()
-        dir_vault_entry.grid(row=0, column=0, sticky=(tk.W, tk.E), padx=(0, 5))
-        ttk.Button(dir_vault_frame, text="Browse", command=self.browse_dir_vault).grid(row=0, column=1)
+        # Vault Name
+        ttk.Label(main_frame, text="Obsidian Vault Name:").grid(row=row, column=0, sticky=tk.W, pady=5)
+        vault_name_frame = ttk.Frame(main_frame)
+        vault_name_frame.grid(row=row, column=1, sticky=(tk.W, tk.E), pady=5, padx=(10, 0))
+        vault_name_frame.columnconfigure(0, weight=1)
+        # vault_name_entry = ttk.Combobox(vault_name_frame, state="readonly")
+        vault_name_entry = ttk.Combobox(vault_name_frame, textvariable=self.vault_name_var)
+        vault_name_entry['values'] = self.v_list
+        vault_name_entry['state'] = 'readonly'
+
+        vault_name_entry.current(0)
+        vault_name_entry.grid(row=row, column=0, sticky=(tk.W, tk.E), padx=(0, 5))
+
+        # logo
+        ttk.Label(main_frame, image=self.frame_image).grid(row=row, rowspan=5, column=2,
+                                                           sticky=(tk.NE), padx=(0, 5))
+
+        # ttk.Label(
+        #     main_frame,
+        #     image=self.frame_image,
+        #     relief=tk.RIDGE,
+        # ).grid(row=row, column=2, rowspan=6, padx=10, pady=10)
+
         row += 1
-        self.dir_vault_status = ttk.Label(main_frame, text="", foreground="red")
-        self.dir_vault_status.grid(row=row, column=1, sticky=tk.W, padx=(10, 0))
+
+        # Ignore Directories
+        ttk.Label(main_frame, text="Directories to Ignore\n(comma separated):").grid(row=row, column=0, sticky=tk.W, pady=(15, 5))
+        dirs_skip_rel_str_entry = ttk.Entry(main_frame, textvariable=self.dirs_skip_rel_str_var, width=50)
+        dirs_skip_rel_str_entry.grid(row=row, column=1, sticky=(tk.W, tk.E), pady=(15, 5), padx=(10, 0))
+        row += 1
+        self.dirs_skip_rel_str_status = ttk.Label(main_frame, text="", foreground="red")
+        self.dirs_skip_rel_str_status.grid(row=row, column=1, sticky=tk.W, padx=(10, 0))
         row += 1
 
         # Executable Path
@@ -82,16 +110,7 @@ class SetupScreen:
         ttk.Button(wb_exec_frame, text="Browse", command=self.browse_exec_path).grid(row=0, column=1)
         row += 1
         self.wb_exec_status = ttk.Label(main_frame, text="", foreground="red")
-        self.wb_exec_status.grid(row=row, column=1, sticky=tk.W, padx=(10, 0))
-        row += 1
-
-        # Ignore Directories
-        ttk.Label(main_frame, text="Directories to Ignore\n(comma separated):").grid(row=row, column=0, sticky=tk.W, pady=(15, 5))
-        dirs_skip_rel_str_entry = ttk.Entry(main_frame, textvariable=self.dirs_skip_rel_str_var, width=50)
-        dirs_skip_rel_str_entry.grid(row=row, column=1, sticky=(tk.W, tk.E), pady=(15, 5), padx=(10, 0))
-        row += 1
-        self.dirs_skip_rel_str_status = ttk.Label(main_frame, text="", foreground="red")
-        self.dirs_skip_rel_str_status.grid(row=row, column=1, sticky=tk.W, padx=(10, 0))
+        self.wb_exec_status.grid(row=row, column=1, sticky=tk.NW, padx=(10, 0))
         row += 1
 
         # Options section
@@ -135,12 +154,12 @@ class SetupScreen:
         ttk.Label(links_frame, text="Values Tab Maximum Links:").grid(row=0, column=0, sticky=tk.W, pady=5, padx=(0, 10))
         vals_spinbox = ttk.Spinbox(links_frame, from_=0, to=16300, textvariable=self.link_lim_vals_var, width=10)
         vals_spinbox.grid(row=0, column=1, sticky=tk.W, pady=5)
-        self.link_lim_vals_label = ttk.Label(links_frame, text="Unlimited" if self.config.link_lim_vals == 0 else str(self.config.link_lim_vals))
+        self.link_lim_vals_label = ttk.Label(links_frame, text="Unlimited" if self.cfg.link_lim_vals == 0 else str(self.cfg.link_lim_vals))
         self.link_lim_vals_label.grid(row=0, column=2, sticky=tk.W, pady=5, padx=10)
         ttk.Label(links_frame, text="Tags Tab Maximum Links:").grid(row=1, column=0, sticky=tk.W, pady=5, padx=(0, 10))
         tags_spinbox = ttk.Spinbox(links_frame, from_=0, to=16300, textvariable=self.link_lim_tags_var, width=10)
         tags_spinbox.grid(row=1, column=1, sticky=tk.W, pady=5)
-        self.link_lim_tags_label = ttk.Label(links_frame, text="Unlimited" if self.config.link_lim_tags == 0 else str(self.config.link_lim_tags))
+        self.link_lim_tags_label = ttk.Label(links_frame, text="Unlimited" if self.cfg.link_lim_tags == 0 else str(self.cfg.link_lim_tags))
         self.link_lim_tags_label.grid(row=1, column=2, sticky=tk.W, pady=5, padx=10)
 
         def update_links_label(*args):
@@ -167,7 +186,7 @@ class SetupScreen:
         cancel_button.pack(side=tk.LEFT)
 
         # Bind validation
-        self.dir_vault_var.trace('w', lambda *args: self.validate_all_fields())
+        # self.vault_name_var.trace('w', lambda *args: self.validate_all_fields())
         self.pn_wb_exec_var.trace('w', lambda *args: self.validate_all_fields())
         self.dirs_skip_rel_str_var.trace('w', lambda *args: self.validate_all_fields())
         self.validate_all_fields()
@@ -179,21 +198,21 @@ class SetupScreen:
         self.root.geometry(f"+{x}+{y}")
         self.root.mainloop()
 
-    def browse_dir_vault(self):
-        folder_path = filedialog.askdirectory(
-            title="Select Obsidian Vault Directory",
-            initialdir=self.dir_vault_var.get() if self.dir_vault_var.get() else "/"
-        )
-        if folder_path:
-            self.dir_vault_var.set(folder_path)
-            self.validate_all_fields()
+    # def browse_dir_vault(self):
+    #     folder_path = filedialog.askdirectory(
+    #         title="Select Obsidian Vault",
+    #         initialdir=self.vault_name_var.get() if self.vault_name_var.get() else "/"
+    #     )
+    #     if folder_path:
+    #         self.vault_name_var.set(folder_path)
+    #         self.validate_all_fields()
 
     def browse_exec_path(self):
         file_path = filedialog.askopenfilename(
             title="Select Spreadsheet Executable",
             initialdir=os.path.dirname(self.pn_wb_exec_var.get()) if self.pn_wb_exec_var.get() else "/",
             filetypes=[
-                ("Executable files", "*.exe" if self.config.cfg_os == "Windows" else "*"),
+                ("Executable files", "*.exe" if self.cfg.cfg_os == "Windows" else "*"),
                 ("All files", "*.*")
             ]
         )
@@ -202,14 +221,9 @@ class SetupScreen:
             self.validate_all_fields()
 
     def validate_all_fields(self):
-        dir_vault_valid, dir_vault_msg = self.config.validate_dir_vault(self.dir_vault_var.get())
-        wb_exec_valid, wb_exec_msg = self.config.validate_pn_wb_exec(self.pn_wb_exec_var.get())
-        dirs_skip_rel_str_valid, dirs_skip_rel_str_msg = self.config.validate_dirs_skip_rel_str(
-            self.dirs_skip_rel_str_var.get(), self.dir_vault_var.get()
-        )
-        self.dir_vault_status.config(
-            text=dir_vault_msg if not dir_vault_valid else "✓ Valid",
-            foreground="red" if not dir_vault_valid else "green"
+        wb_exec_valid, wb_exec_msg = self.cfg.validate_pn_wb_exec(self.pn_wb_exec_var.get())
+        dirs_skip_rel_str_valid, dirs_skip_rel_str_msg = self.cfg.validate_dirs_skip_rel_str(
+            self.dirs_skip_rel_str_var.get(), self.dir_vault
         )
         self.wb_exec_status.config(
             text=wb_exec_msg if not wb_exec_valid else "✓ Valid",
@@ -219,28 +233,31 @@ class SetupScreen:
             text=dirs_skip_rel_str_msg if not dirs_skip_rel_str_valid else "✓ Valid" if self.dirs_skip_rel_str_var.get().strip() else "",
             foreground="red" if not dirs_skip_rel_str_valid else "green"
         )
-        all_valid = dir_vault_valid and wb_exec_valid and dirs_skip_rel_str_valid
+        all_valid = wb_exec_valid and dirs_skip_rel_str_valid
         self.save_button.config(state="normal" if all_valid else "disabled")
         return all_valid
 
     def on_save_and_run(self):
         if self.validate_all_fields():
-            self.config.dir_vault = self.dir_vault_var.get().strip()
-            self.config.pn_wb_exec = self.pn_wb_exec_var.get().strip()
-            self.config.dirs_skip_rel_str = self.dirs_skip_rel_str_var.get().strip()
-            self.config.bool_shw_notes = self.bool_shw_notes_var.get()
-            self.config.bool_rel_paths = self.bool_rel_paths_var.get()
-            self.config.bool_summ_rows = self.bool_summ_rows_var.get()
-            self.config.bool_unused_1  = self.bool_unused_1_var.get()
-            self.config.bool_unused_2  = self.bool_unused_2_var.get()
-            self.config.bool_unused_3  = self.bool_unused_3_var.get()
+            self.cfg.c_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            self.cfg.vault_name = self.vault_name_var.get().strip()
+            self.cfg.vault_id = self.vaults[self.cfg.vault_name][0]
+            self.cfg.dir_vault = self.vaults[self.cfg.vault_name][1]
+            self.cfg.pn_wb_exec = self.pn_wb_exec_var.get().strip()
+            self.cfg.dirs_skip_rel_str = self.dirs_skip_rel_str_var.get().strip()
+            self.cfg.bool_shw_notes = self.bool_shw_notes_var.get()
+            self.cfg.bool_rel_paths = self.bool_rel_paths_var.get()
+            self.cfg.bool_summ_rows = self.bool_summ_rows_var.get()
+            self.cfg.bool_unused_1  = self.bool_unused_1_var.get()
+            self.cfg.bool_unused_2  = self.bool_unused_2_var.get()
+            self.cfg.bool_unused_3  = self.bool_unused_3_var.get()
             try:
-                self.config.link_lim_vals = int(self.link_lim_vals_var.get())
-                self.config.link_lim_tags = int(self.link_lim_tags_var.get())
+                self.cfg.link_lim_vals = int(self.link_lim_vals_var.get())
+                self.cfg.link_lim_tags = int(self.link_lim_tags_var.get())
             except ValueError:
                 messagebox.showerror("Error", "Maximum links values must be valid numbers")
                 return
-            if self.config.save_config():
+            if self.cfg.save_config():
                 self.root.quit()
                 self.root.destroy()
                 subprocess.run(["python", "v_chk.py"])
@@ -254,14 +271,15 @@ class SetupScreen:
 class SysConfig:
     def __init__(self, dbug_lvl=0):
         self.DBUG_LVL = dbug_lvl
-        self.vault_id     = ""
-        self.dir_vault    = ""
-        self.pn_wb_exec   = ""
-        self.obs_app_obj = ObsidianApp()
-        self.obs_vaults = self.obs_app_obj.obs_vaults
         self.cfg_os = platform.system()
+        self.o_app = ObsidianApp()
+        self.vault_name = self.o_app.dflt_vault_name
+        self.vault_id   = self.o_app.obs_vaults[self.vault_name][0]
+        self.dir_vault  = self.o_app.obs_vaults[self.vault_name][1]
+        self.pn_wb_exec = self.o_app.dflt_wb_exec
+        self.obs_vaults = self.o_app.obs_vaults
         self.cfg_sys_id = 'v_chk'
-        self.cfg_sys_ver = "0.7"
+        self.cfg_sys_ver = "0.9.2"
         self.c_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.sys_dir = f"{Path(__file__).parent.parent.absolute()}/"
         self.dir_batch = f"{self.sys_dir}data/batch_files/"
@@ -291,11 +309,12 @@ class SysConfig:
         self.mkdirs([data_dir, self.sys_dir, self.dir_batch])
         if os.path.exists(self.pn_cfg):
             self.load_config()
-            x = self.chk_fields_on_load()
-            if not x:
+            if not self.chk_fields_on_load():
                 SetupScreen(self).show()
         else:
             SetupScreen(self).show()
+
+        print("x")
 
     def chk_fields_on_load(self):
         dir_vault_valid, _ = self.validate_dir_vault(self.dir_vault)
@@ -346,9 +365,9 @@ class SysConfig:
             return False
 
     def cfg_pack(self):
-        path = Path(self.dir_templates.strip())
-        if not path.exists() or not path.is_dir() or self.dir_templates == '':
-            self.dir_templates = self.get_templates_dir()
+        # path = Path(self.dir_templates.strip())
+        # if not path.exists() or not path.is_dir() or self.dir_templates == '':
+        self.dir_templates = self.get_templates_dir()
         self.dirs_dot = [f.name for f in os.scandir(self.dir_vault) if
                          f.is_dir() and f.path.startswith(f"{self.dir_vault}/.")]
         dirs = [d.strip() for d in self.dirs_skip_rel_str.split(',') if d.strip()]
@@ -358,6 +377,7 @@ class SysConfig:
             self.dirs_skip_abs_lst += [str(dname)]
         self.cfg = {
               'vault_id':           self.vault_id
+            , 'vault_name':         self.vault_name
             , 'dir_vault':          self.dir_vault
             , 'pn_wb_exec':         self.pn_wb_exec
             , 'cfg_sys_id':         self.cfg_sys_id
@@ -383,16 +403,18 @@ class SysConfig:
             , 'bool_unused_3':      self.bool_unused_3
             , 'link_lim_vals':      self.link_lim_vals
             , 'link_lim_tags':      self.link_lim_tags
+            , 'obs_vaults':         self.obs_vaults
         }
 
     def cfg_unpack(self):
         self.vault_id           = self.cfg.get('vault_id', '')
-        self.dir_vault         = self.cfg.get('dir_vault', '')
-        self.pn_wb_exec       = self.cfg.get('pn_wb_exec', '')
+        self.vault_name         = self.cfg.get('vault_name', '')
+        self.dir_vault          = self.cfg.get('dir_vault', '')
+        self.pn_wb_exec         = self.cfg.get('pn_wb_exec', '')
         self.cfg_sys_id         = self.cfg.get('cfg_sys_id', 'v_chk')
         self.cfg_sys_ver        = self.cfg.get('cfg_sys_ver', '0.7')
         self.c_date             = self.cfg.get('c_date', datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-        self.dir_batch            = self.cfg.get('dir_batch', f"{self.sys_dir}data/batch_files/")
+        self.dir_batch          = self.cfg.get('dir_batch', f"{self.sys_dir}data/batch_files/")
         self.dir_wbs            = self.cfg.get('dir_wbs', f"{self.sys_dir}data/workbooks/")
         self.dir_templates            = self.cfg.get('dir_templates', self.get_templates_dir())
         self.tab_seq            = self.cfg.get('tab_seq', '')
@@ -410,8 +432,9 @@ class SysConfig:
         self.bool_unused_1      = self.cfg.get('bool_unused_1', True)
         self.bool_unused_2      = self.cfg.get('bool_unused_2', True)
         self.bool_unused_3      = self.cfg.get('bool_unused_3', True)
-        self.link_lim_vals = self.cfg.get('link_lim_vals', 0)
-        self.link_lim_tags = self.cfg.get('link_lim_tags', 0)
+        self.link_lim_vals      = self.cfg.get('link_lim_vals', 0)
+        self.link_lim_tags      = self.cfg.get('link_lim_tags', 0)
+        self.obs_vaults         = self.cfg.get('obs_vaults', [])
 
     @staticmethod
     def validate_vault_id(vault_id):
@@ -467,10 +490,7 @@ class SysConfig:
             return False, "File is not executable"
         return True, ""
 
-    def get_config(self):
-        return self.cfg
 
 if __name__ == "__main__":
-    config_manager = SysConfig()
-    setup_screen = SetupScreen(config_manager).show()
-    config = config_manager.get_config()
+    sys_cfg = SysConfig()
+    setup_screen = SetupScreen(sys_cfg).show()

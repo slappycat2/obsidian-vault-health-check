@@ -52,13 +52,14 @@ from src.v_chk_class_lib import PluginMan, Colors, ObsidianApp
 # Todo: ER-014 - Fix Area51 Table Dump
 # Todo: ER-015 - Rename dirs_skip_rel_str to dirs_skip_abs_lst_user
 # Todo: ER-016 - Files needs Date Modified and Date Created columns
-# Todo: ER-0 -
+# Todo: ER-017 - v_chk: routines--to isolate properties and tags in a vault--need to be made into stand alone classes. \
+#                This would allow for a built-in Search and Replace function at a later date.
 # Todo: ER-0 -
 # Todo: ER-0 -
 
 # Todo: ER-999 - Refactoring:
 #   - Use Class sub-classes for tab definitions? Where is there overlap?
-#   - Clean up code!!!
+#   - Clean up comments and print statements
 
 # Done
 # Todo: Bug-023 - Highlight use of uppercase. Done. (Can only be done in Files)
@@ -124,7 +125,7 @@ class ExcelExporter:
         self.tab_id_sub_key = ''
         self.tabs_built = {}
         self.wb_tabs_done = {}
-        self.obs_app_obj = ObsidianApp()
+        self.o_app = ObsidianApp()
         cfg_setup = WbDataDef(self.DBUG_LVL)
         self.xyml_descs = cfg_setup.xyml_descs
 

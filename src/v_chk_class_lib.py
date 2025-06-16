@@ -408,17 +408,19 @@ class ObsidianApp:
     possible platforms: Linux, Darwin, Windows
     """
     def __init__(self):
-        self.obs_platform = platform.system()
+        self.obs_os = platform.system()
         self.dir_obs_json = None
         self.dir_obs_vault = None
         self.pn_obs_json = None
         self.obs_vaults_open = []
         self.obs_vaults = {}
+        self.dflt_vault_name = None
+        self.dflt_wb_exec = self.set_dflt_wb_exec(self.obs_os)
 
         home_dir = Path.home()
         home_dir_str = str(home_dir)
 
-        if self.obs_platform == 'Windows':
+        if self.obs_os == 'Windows':
             home_dir_str = os.getenv('APPDATA', '')           # Not really Home, but it works for now...
 
         obs_json_locs = {
@@ -427,7 +429,7 @@ class ObsidianApp:
             , 'Windows': f'{home_dir_str}/obsidian/'
         }
 
-        self.dir_obs_json = obs_json_locs.get(self.obs_platform, '')
+        self.dir_obs_json = obs_json_locs[self.obs_os]
         self.pn_obs_json = f"{self.dir_obs_json}obsidian.json"
         obs_json_obj = JsonFile(self.pn_obs_json)
         if obs_json_obj.err_msg:
@@ -441,12 +443,40 @@ class ObsidianApp:
 
         for vault_id, vault_dict in vaults_dict.items():
             if 'path' in vault_dict:
-                self.obs_vaults[vault_dict['path']] = vault_id
+                v_dir = Path(vault_dict['path'])
+
+                if not v_dir.is_dir():
+                    continue
+                v_name = f'{v_dir.stem} ({(v_dir.parent)})'
+                v_record = [vault_id, str(v_dir)]
+                self.dflt_vault_name = v_name
+
+                self.obs_vaults[v_name] = v_record
                 if 'open' in vault_dict and vault_dict['open']:
-                    self.obs_vaults_open.append(vault_id)
+                    self.dflt_vault_name = v_name
+                    self.obs_vaults_open.append(v_name)
 
         if not self.obs_vaults:
             raise Exception(f"ObsidianApp: No Vaults with a 'path' key in obsidian.json")
+
+    def set_dflt_wb_exec(self, cfg_os):
+        wb_exec = ""
+        common_execs = {
+              'Linux': ['scalc']
+            , 'Darwin': ['open -a Numbers.app ']
+            , 'Windows': ['C:/Program Files/Microsoft Office/root/Office16/EXCEL.EXE', 'C:/Program Files/LibreOffice/program/scalc.exe']
+         }
+
+        for wb_app in common_execs[cfg_os]:
+            if cfg_os != 'Windows':
+                wb_exec = wb_app
+                break
+            elif Path(wb_app).exists():
+                wb_exec = wb_app
+                break
+
+        return wb_exec
+
 
 def main() -> None:
     pass

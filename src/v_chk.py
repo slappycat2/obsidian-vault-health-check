@@ -122,8 +122,8 @@ class VaultHealthCheck:   # WbConfig
             if self.DBUG_LVL > 2:
                 print(f"Processing file: {md_file}")
 
-            if 'My Vision Board Example' in str(md_file):
-                print(f"Processing file: {md_file}")
+            if 'FUN - Frequently Used Notes' in str(md_file):
+                print(f"Debugging file: {md_file}")
 
             md_pname = str(md_file)
             self.process_md_file(md_pname)
@@ -404,7 +404,9 @@ class VaultHealthCheck:   # WbConfig
             k_dict = {uval: []}
             obs_dict[ukey] = k_dict
         # we have to get the existing files list, before we can append to it...
-        if uval in k_dict:
+        if uval in k_dict:  # fails with [[sbc def]] being made a list [['abc def']] see links in
+                            # 'FUN - Frequently Used Notes' in o2_new. This is a valid link, too!
+                            # Stack: 407 367  348  286  187  162  129
             f_list = k_dict[uval]
 
         f_list.append(filepath)

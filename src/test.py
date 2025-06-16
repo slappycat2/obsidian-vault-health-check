@@ -1,4 +1,23 @@
 
+import yaml
+
+v = """[[⚒️ FUE - Frequently Used Emoji's]]"""
+y = """
+test1: [[🗺️ Personal Knowledge Management MOC]]
+test2: "[[Personal Knowledge Management MOC]]"
+test3:
+ - [[🗺️ Personal Knowledge Management MOC]]
+ - [[🗺️ Obsidian MOC]]
+ - [[⚒️ FUE - Frequently Used Emoji's]]
+"""
+yml = yaml.load(y, Loader=yaml.SafeLoader)
+print(f'"{v}" is of type "{type(v)}"')
+s = str(v)
+print(s)
+
+
+
+# ---
 # import tkinter as tk
 #
 # def on_option_select(event):
@@ -23,17 +42,17 @@
 # result_label = tk.Label(root, text="")
 # result_label.pack()
 # root.mainloop()
-
-#Import Tkinter library
-from tkinter import *
-from tkinter import ttk
-#Create an instance of Tkinter frame or window
-win= Tk()
-#Set the geometry of tkinter frame
-win.geometry("750x250")
-#Create a Combobox
-combobox= ttk.Combobox(win,state= "readonly")
-combobox['values']=('C++','Java','Python')
-combobox.current(2)
-combobox.pack(pady=30, ipadx=20)
-win.mainloop()
+# ---
+# #Import Tkinter library
+# from tkinter import *
+# from tkinter import ttk
+# #Create an instance of Tkinter frame or window
+# win= Tk()
+# #Set the geometry of tkinter frame
+# win.geometry("750x250")
+# #Create a Combobox
+# combobox= ttk.Combobox(win,state= "readonly")
+# combobox['values']=('C++','Java','Python')
+# combobox.current(2)
+# combobox.pack(pady=30, ipadx=20)
+# win.mainloop()
