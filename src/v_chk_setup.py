@@ -22,11 +22,10 @@ class SetupScreen:
         self.root = tk.Tk()
         self.root.title("Obsidian Vault Health Check")
         self.root.geometry("700x560")
-        self.root.resizable(False, False)
+        self.root.resizable(True, True)
         self.root.iconbitmap('../img/swenlogo.ico')
         self.logo_image = Image.open('../img/SwenLogo2.png').resize((200, 200))
         self.frame_image = ImageTk.PhotoImage(self.logo_image)
-
 
         # Tkinter variables
         self.vault_name_var = tk.StringVar(value=self.cfg.vault_name)
@@ -49,118 +48,108 @@ class SetupScreen:
         self.save_button = None
 
     def show(self):
-        canvas = tk.Canvas(self.root)
+        # - For Scrollbar, chg 1st main_frame arg "self.root" to "scrollable_frame" and uncomment
+        # canvas = tk.Canvas(self.root)
         # scrollbar = ttk.Scrollbar(self.root, orient="vertical", command=canvas.yview)
-        scrollable_frame = ttk.Frame(canvas)
-        scrollable_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-        )
-        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        # scrollable_frame = ttk.Frame(canvas)
+        # scrollable_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        # canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
         # canvas.configure(yscrollcommand=scrollbar.set)
-        canvas.pack(side="left", fill="both", expand=True)
+        # canvas.pack(side="left", fill="both", expand=True)
         # scrollbar.pack(side="right", fill="y")
 
-        main_frame = ttk.Frame(scrollable_frame, padding="20")
+        main_frame = ttk.Frame(self.root, padding="20")
         main_frame.pack(fill="both", expand=True)
         main_frame.columnconfigure(1, weight=1)
         row = 0
 
         # Vault Name
-        ttk.Label(main_frame, text="Obsidian Vault Name:").grid(row=row, column=0, sticky=tk.W, pady=5)
+        ttk.Label(main_frame, text="Obsidian Vault Name:").grid(row=row, column=0, sticky="w", pady=5)
         vault_name_frame = ttk.Frame(main_frame)
-        vault_name_frame.grid(row=row, column=1, sticky=(tk.W, tk.E), pady=5, padx=(10, 0))
+        vault_name_frame.grid(row=row, column=1, sticky="ew", pady=5, padx=(10, 0))
         vault_name_frame.columnconfigure(0, weight=1)
-        # vault_name_entry = ttk.Combobox(vault_name_frame, state="readonly")
         vault_name_entry = ttk.Combobox(vault_name_frame, textvariable=self.vault_name_var)
         vault_name_entry['values'] = self.v_list
         vault_name_entry['state'] = 'readonly'
 
         vault_name_entry.current(0)
-        vault_name_entry.grid(row=row, column=0, sticky=(tk.W, tk.E), padx=(0, 5))
+        vault_name_entry.grid(row=row, column=0, sticky="ew", padx=(0, 5))
 
         # logo
-        ttk.Label(main_frame, image=self.frame_image).grid(row=row, rowspan=5, column=2,
-                                                           sticky=(tk.NE), padx=(0, 5))
-
-        # ttk.Label(
-        #     main_frame,
-        #     image=self.frame_image,
-        #     relief=tk.RIDGE,
-        # ).grid(row=row, column=2, rowspan=6, padx=10, pady=10)
-
+        ttk.Label(main_frame, image=self.frame_image).grid(row=row,
+                        rowspan=5, column=3, sticky="ne", padx=(0, 5))
         row += 1
 
         # Ignore Directories
-        ttk.Label(main_frame, text="Directories to Ignore\n(comma separated):").grid(row=row, column=0, sticky=tk.W, pady=(15, 5))
+        ttk.Label(main_frame, text="Directories to Ignore\n(comma separated):").grid(row=row, column=0, sticky="w", pady=(15, 5))
         dirs_skip_rel_str_entry = ttk.Entry(main_frame, textvariable=self.dirs_skip_rel_str_var, width=50)
-        dirs_skip_rel_str_entry.grid(row=row, column=1, sticky=(tk.W, tk.E), pady=(15, 5), padx=(10, 0))
+        dirs_skip_rel_str_entry.grid(row=row, column=1, sticky="ew", pady=(15, 5), padx=(10, 0))
         row += 1
         self.dirs_skip_rel_str_status = ttk.Label(main_frame, text="", foreground="red")
-        self.dirs_skip_rel_str_status.grid(row=row, column=1, sticky=tk.W, padx=(10, 0))
+        self.dirs_skip_rel_str_status.grid(row=row, column=1, sticky="w", padx=(10, 0))
         row += 1
 
         # Executable Path
-        ttk.Label(main_frame, text="Spreadsheet Executable:").grid(row=row, column=0, sticky=tk.W, pady=(15, 5))
+        ttk.Label(main_frame, text="Spreadsheet Executable:").grid(row=row, column=0, sticky="w", pady=(15, 5))
         wb_exec_frame = ttk.Frame(main_frame)
-        wb_exec_frame.grid(row=row, column=1, sticky=(tk.W, tk.E), pady=(15, 5), padx=(10, 0))
+        wb_exec_frame.grid(row=row, column=1, sticky="ew", pady=(15, 5), padx=(10, 0))
         wb_exec_frame.columnconfigure(0, weight=1)
         wb_exec_entry = ttk.Entry(wb_exec_frame, textvariable=self.pn_wb_exec_var)
-        wb_exec_entry.grid(row=0, column=0, sticky=(tk.W, tk.E), padx=(0, 5))
+        wb_exec_entry.grid(row=0, column=0, sticky="ew", padx=(0, 5))
         ttk.Button(wb_exec_frame, text="Browse", command=self.browse_exec_path).grid(row=0, column=1)
         row += 1
         self.wb_exec_status = ttk.Label(main_frame, text="", foreground="red")
-        self.wb_exec_status.grid(row=row, column=1, sticky=tk.NW, padx=(10, 0))
+        self.wb_exec_status.grid(row=row, column=1, sticky="nw", padx=(10, 0))
         row += 1
 
         # Options section
         ttk.Label(main_frame, text="Options:", font=("TkDefaultFont", 10, "bold")).grid(
-            row=row, column=0, columnspan=2, sticky=tk.W, pady=(20, 10)
+            row=row, column=0, columnspan=2, sticky="w", pady=(20, 10)
         )
         row += 1
         options_frame = ttk.Frame(main_frame)
-        options_frame.grid(row=row, column=0, columnspan=2, sticky=(tk.W, tk.E), padx=(0, 0))
+        options_frame.grid(row=row, column=0, columnspan=2, sticky="ew", padx=(0, 0))
         options_frame.columnconfigure(0, weight=1)
         options_frame.columnconfigure(1, weight=1)
         ttk.Checkbutton(options_frame, text="Show Notes", variable=self.bool_shw_notes_var).grid(
-            row=0, column=0, sticky=tk.W, pady=5
+            row=0, column=0, sticky="w", pady=5
         )
         ttk.Checkbutton(options_frame, text="For Future Use-1", variable=self.bool_unused_1_var, state='disabled').grid(
-            row=0, column=1, sticky=tk.W, pady=5
+            row=0, column=1, sticky="w", pady=5
         )
         ttk.Checkbutton(options_frame, text="Use Full Paths in Links", variable=self.bool_rel_paths_var).grid(
-            row=1, column=0, sticky=tk.W, pady=5
+            row=1, column=0, sticky="w", pady=5
         )
         ttk.Checkbutton(options_frame, text="For Future Use-2", variable=self.bool_unused_2_var, state='disabled').grid(
-            row=1, column=1, sticky=tk.W, pady=5
+            row=1, column=1, sticky="w", pady=5
         )
         ttk.Checkbutton(options_frame, text="Show Rows in Summary", variable=self.bool_summ_rows_var, state='disabled').grid(
-            row=2, column=0, sticky=tk.W, pady=5
+            row=2, column=0, sticky="w", pady=5
         )
         ttk.Checkbutton(options_frame, text="For Future Use-3", variable=self.bool_unused_3_var, state='disabled').grid(
-            row=2, column=1, sticky=tk.W, pady=5
+            row=2, column=1, sticky="w", pady=5
         )
         row += 1
 
         # Displayed Links Maximums
         ttk.Label(main_frame, text="Displayed Links Maximums:", font=("TkDefaultFont", 10, "bold")).grid(
-            row=row, column=0, columnspan=2, sticky=tk.W, pady=(20, 10)
+            row=row, column=0, columnspan=2, sticky="w", pady=(20, 10)
         )
         row += 1
         links_frame = ttk.Frame(main_frame)
-        links_frame.grid(row=row, column=0, columnspan=2, sticky=(tk.W, tk.E), padx=(0, 0))
+        links_frame.grid(row=row, column=0, columnspan=2, sticky="ew", padx=(0, 0))
         links_frame.columnconfigure(1, weight=1)
         links_frame.columnconfigure(3, weight=1)
-        ttk.Label(links_frame, text="Values Tab Maximum Links:").grid(row=0, column=0, sticky=tk.W, pady=5, padx=(0, 10))
+        ttk.Label(links_frame, text="Values Tab Maximum Links:").grid(row=0, column=0, sticky="w", pady=5, padx=(0, 10))
         vals_spinbox = ttk.Spinbox(links_frame, from_=0, to=16300, textvariable=self.link_lim_vals_var, width=10)
-        vals_spinbox.grid(row=0, column=1, sticky=tk.W, pady=5)
+        vals_spinbox.grid(row=0, column=1, sticky="w", pady=5)
         self.link_lim_vals_label = ttk.Label(links_frame, text="Unlimited" if self.cfg.link_lim_vals == 0 else str(self.cfg.link_lim_vals))
-        self.link_lim_vals_label.grid(row=0, column=2, sticky=tk.W, pady=5, padx=10)
-        ttk.Label(links_frame, text="Tags Tab Maximum Links:").grid(row=1, column=0, sticky=tk.W, pady=5, padx=(0, 10))
+        self.link_lim_vals_label.grid(row=0, column=2, sticky="w", pady=5, padx=10)
+        ttk.Label(links_frame, text="Tags Tab Maximum Links:").grid(row=1, column=0, sticky="w", pady=5, padx=(0, 10))
         tags_spinbox = ttk.Spinbox(links_frame, from_=0, to=16300, textvariable=self.link_lim_tags_var, width=10)
-        tags_spinbox.grid(row=1, column=1, sticky=tk.W, pady=5)
+        tags_spinbox.grid(row=1, column=1, sticky="w", pady=5)
         self.link_lim_tags_label = ttk.Label(links_frame, text="Unlimited" if self.cfg.link_lim_tags == 0 else str(self.cfg.link_lim_tags))
-        self.link_lim_tags_label.grid(row=1, column=2, sticky=tk.W, pady=5, padx=10)
+        self.link_lim_tags_label.grid(row=1, column=2, sticky="w", pady=5, padx=10)
 
         def update_links_label(*args):
             try:
