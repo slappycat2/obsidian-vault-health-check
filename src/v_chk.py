@@ -594,7 +594,6 @@ class SplashScreen(tk.Tk):
             self.progress["value"] = progress_value
         self.update_idletasks()
 
-
 def main():
     # Initialize configuration
     config = SysConfig()
@@ -630,7 +629,7 @@ def run_main(splash):
 
     # try:
     splash.update_status(phase_txt[1], phase_pct[1])
-    DBUG_LVL = 99
+    DBUG_LVL = 0
     vc_obj = VaultHealthCheck(DBUG_LVL)
     splash.update_status(phase_txt[2], phase_pct[2])
     wb_obj = NewWb(DBUG_LVL)

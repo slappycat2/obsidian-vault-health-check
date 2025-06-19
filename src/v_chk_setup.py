@@ -21,8 +21,9 @@ class SetupScreen:
         self.dir_vault = self.cfg.dir_vault
         self.root = tk.Tk()
         self.root.title("Obsidian Vault Health Check")
-        self.root.geometry("700x560")
+        self.root.geometry("720x540")
         self.root.resizable(True, True)
+        self.root.attributes('-topmost', 1)
         self.root.iconbitmap('../img/swenlogo.ico')
         self.logo_image = Image.open('../img/SwenLogo2.png').resize((200, 200))
         self.frame_image = ImageTk.PhotoImage(self.logo_image)
@@ -58,121 +59,170 @@ class SetupScreen:
         # canvas.pack(side="left", fill="both", expand=True)
         # scrollbar.pack(side="right", fill="y")
 
-        main_frame = ttk.Frame(self.root, padding="20")
-        main_frame.pack(fill="both", expand=True)
-        main_frame.columnconfigure(1, weight=1)
-        row = 0
-
-        # Vault Name
-        ttk.Label(main_frame, text="Obsidian Vault Name:").grid(row=row, column=0, sticky="w", pady=5)
-        vault_name_frame = ttk.Frame(main_frame)
-        vault_name_frame.grid(row=row, column=1, sticky="ew", pady=5, padx=(10, 0))
-        vault_name_frame.columnconfigure(0, weight=1)
-        vault_name_entry = ttk.Combobox(vault_name_frame, textvariable=self.vault_name_var)
-        vault_name_entry['values'] = self.v_list
-        vault_name_entry['state'] = 'readonly'
-
-        vault_name_entry.current(0)
-        vault_name_entry.grid(row=row, column=0, sticky="ew", padx=(0, 5))
-
-        # logo
-        ttk.Label(main_frame, image=self.frame_image).grid(row=row,
-                        rowspan=5, column=3, sticky="ne", padx=(0, 5))
-        row += 1
-
-        # Ignore Directories
-        ttk.Label(main_frame, text="Directories to Ignore\n(comma separated):").grid(row=row, column=0, sticky="w", pady=(15, 5))
-        dirs_skip_rel_str_entry = ttk.Entry(main_frame, textvariable=self.dirs_skip_rel_str_var, width=50)
-        dirs_skip_rel_str_entry.grid(row=row, column=1, sticky="ew", pady=(15, 5), padx=(10, 0))
-        row += 1
-        self.dirs_skip_rel_str_status = ttk.Label(main_frame, text="", foreground="red")
-        self.dirs_skip_rel_str_status.grid(row=row, column=1, sticky="w", padx=(10, 0))
-        row += 1
-
-        # Executable Path
-        ttk.Label(main_frame, text="Spreadsheet Executable:").grid(row=row, column=0, sticky="w", pady=(15, 5))
-        wb_exec_frame = ttk.Frame(main_frame)
-        wb_exec_frame.grid(row=row, column=1, sticky="ew", pady=(15, 5), padx=(10, 0))
-        wb_exec_frame.columnconfigure(0, weight=1)
-        wb_exec_entry = ttk.Entry(wb_exec_frame, textvariable=self.pn_wb_exec_var)
-        wb_exec_entry.grid(row=0, column=0, sticky="ew", padx=(0, 5))
-        ttk.Button(wb_exec_frame, text="Browse", command=self.browse_exec_path).grid(row=0, column=1)
-        row += 1
-        self.wb_exec_status = ttk.Label(main_frame, text="", foreground="red")
-        self.wb_exec_status.grid(row=row, column=1, sticky="nw", padx=(10, 0))
-        row += 1
-
-        # Options section
-        ttk.Label(main_frame, text="Options:", font=("TkDefaultFont", 10, "bold")).grid(
-            row=row, column=0, columnspan=2, sticky="w", pady=(20, 10)
-        )
-        row += 1
-        options_frame = ttk.Frame(main_frame)
-        options_frame.grid(row=row, column=0, columnspan=2, sticky="ew", padx=(0, 0))
-        options_frame.columnconfigure(0, weight=1)
-        options_frame.columnconfigure(1, weight=1)
-        ttk.Checkbutton(options_frame, text="Show Notes", variable=self.bool_shw_notes_var).grid(
-            row=0, column=0, sticky="w", pady=5
-        )
-        ttk.Checkbutton(options_frame, text="For Future Use-1", variable=self.bool_unused_1_var, state='disabled').grid(
-            row=0, column=1, sticky="w", pady=5
-        )
-        ttk.Checkbutton(options_frame, text="Use Full Paths in Links", variable=self.bool_rel_paths_var).grid(
-            row=1, column=0, sticky="w", pady=5
-        )
-        ttk.Checkbutton(options_frame, text="For Future Use-2", variable=self.bool_unused_2_var, state='disabled').grid(
-            row=1, column=1, sticky="w", pady=5
-        )
-        ttk.Checkbutton(options_frame, text="Show Rows in Summary", variable=self.bool_summ_rows_var, state='disabled').grid(
-            row=2, column=0, sticky="w", pady=5
-        )
-        ttk.Checkbutton(options_frame, text="For Future Use-3", variable=self.bool_unused_3_var, state='disabled').grid(
-            row=2, column=1, sticky="w", pady=5
-        )
-        row += 1
-
-        # Displayed Links Maximums
-        ttk.Label(main_frame, text="Displayed Links Maximums:", font=("TkDefaultFont", 10, "bold")).grid(
-            row=row, column=0, columnspan=2, sticky="w", pady=(20, 10)
-        )
-        row += 1
-        links_frame = ttk.Frame(main_frame)
-        links_frame.grid(row=row, column=0, columnspan=2, sticky="ew", padx=(0, 0))
-        links_frame.columnconfigure(1, weight=1)
-        links_frame.columnconfigure(3, weight=1)
-        ttk.Label(links_frame, text="Values Tab Maximum Links:").grid(row=0, column=0, sticky="w", pady=5, padx=(0, 10))
-        vals_spinbox = ttk.Spinbox(links_frame, from_=0, to=16300, textvariable=self.link_lim_vals_var, width=10)
-        vals_spinbox.grid(row=0, column=1, sticky="w", pady=5)
-        self.link_lim_vals_label = ttk.Label(links_frame, text="Unlimited" if self.cfg.link_lim_vals == 0 else str(self.cfg.link_lim_vals))
-        self.link_lim_vals_label.grid(row=0, column=2, sticky="w", pady=5, padx=10)
-        ttk.Label(links_frame, text="Tags Tab Maximum Links:").grid(row=1, column=0, sticky="w", pady=5, padx=(0, 10))
-        tags_spinbox = ttk.Spinbox(links_frame, from_=0, to=16300, textvariable=self.link_lim_tags_var, width=10)
-        tags_spinbox.grid(row=1, column=1, sticky="w", pady=5)
-        self.link_lim_tags_label = ttk.Label(links_frame, text="Unlimited" if self.cfg.link_lim_tags == 0 else str(self.cfg.link_lim_tags))
-        self.link_lim_tags_label.grid(row=1, column=2, sticky="w", pady=5, padx=10)
-
         def update_links_label(*args):
             try:
                 vals = int(self.link_lim_vals_var.get())
-                self.link_lim_vals_label.config(text="Unlimited" if vals == 0 else str(vals))
+                self.link_lim_vals_label.config(text="(Unlimited)" if vals == 0 else "0=Unlimited")
             except ValueError:
                 self.link_lim_vals_label.config(text="Invalid")
             try:
                 tags = int(self.link_lim_tags_var.get())
-                self.link_lim_tags_label.config(text="Unlimited" if tags == 0 else str(tags))
+                self.link_lim_tags_label.config(text="(Unlimited)" if tags == 0 else "0=Unlimited")
             except ValueError:
                 self.link_lim_tags_label.config(text="Invalid")
+
+        # Main App Frame ---------------------------------------------------------------------
+        main_frame = ttk.Frame(self.root, padding="1", borderwidth=1, relief="ridge")
+        main_frame.pack(fill="both", expand=True)
+        main_frame.columnconfigure(0, weight=1)
+        # main_frame.columnconfigure(1, weight=2)
+        mf_row = 0
+        mf_col = 0
+        f1_1st_col = 0
+
+        # Obsidian Frame ---------------------------------------------------------------------
+        f1_row = 0  # f1 denotes frame nesting level one; re-used for each frame
+        f1_col = f1_1st_col
+
+        # Obsidian Vault Details Frame ---------------------------------------------------------------------
+        obs_frame = ttk.LabelFrame(main_frame, text="Obsidian Vault Details ", padding="20", borderwidth=1, relief="ridge")
+        # obs_frame.columnconfigure(mf_col, minsize=70, weight=3)
+        obs_frame.grid(row=f1_row, column=f1_col, columnspan=5, rowspan=3, sticky="nsew")
+
+        # Vault Name
+        # vault name label
+        f1_col = f1_1st_col
+        vault_name_label = ttk.Label(obs_frame, text="Vault Name:", width=15)
+        vault_name_label.columnconfigure(f1_col, minsize=12, weight=1)
+        vault_name_label.grid(row=f1_row, column=f1_col, sticky="w", padx=15, pady=(20, 0))
+
+        # vault name entry
+        f1_col += 1
+        vault_name_entry = ttk.Combobox(obs_frame, textvariable=self.vault_name_var, width=50)
+        vault_name_entry['values'] = self.v_list
+        vault_name_entry['state'] = 'readonly'
+        vault_name_entry.current(0)
+        vault_name_entry.columnconfigure(f1_col, minsize=30, weight=2)
+        vault_name_entry.grid(row=f1_row,
+                              column=f1_col,
+                              columnspan=3,
+                              sticky="ew",
+                              padx=(10, 0),
+                              pady=(25,10))
+
+        # Ignore Directories (dir_skip_rel)
+        # label
+        f1_row += 1
+        f1_col = f1_1st_col
+        dirs_skip_rel_str_label = ttk.Label(obs_frame, text="Directories to Ignore\n(comma separated):")
+        dirs_skip_rel_str_label.columnconfigure(f1_col, minsize=30, weight=1)
+        dirs_skip_rel_str_label.grid(row=f1_row, column=f1_col, sticky="w", padx=15, pady=(15, 5))
+
+        # entry
+        f1_col += 1
+        dirs_skip_rel_str_entry = ttk.Entry(obs_frame, textvariable=self.dirs_skip_rel_str_var, width=50)
+        dirs_skip_rel_str_entry.columnconfigure((f1_col, f1_col + 1), minsize=30, weight=2)
+        dirs_skip_rel_str_entry.grid(row=f1_row,
+                                     column=f1_col,
+                                     columnspan=2,
+                                     sticky="ew",
+                                     pady=(15, 5),
+                                     padx=(10, 0))
+
+        # status
+        f1_col += 3
+        self.dirs_skip_rel_str_status = ttk.Label(obs_frame, text="", foreground="red")
+        self.dirs_skip_rel_str_status.columnconfigure(f1_col, weight=1)
+        self.dirs_skip_rel_str_status.grid(row=f1_row, column=f1_col, sticky="w", padx=10)
+
+        # logo
+        # mf_col += 1
+        # logo_label = ttk.Label(main_frame, image=self.frame_image)
+        # logo_label.grid(row=mf_row, rowspan=5, column=mf_col, sticky="ne", pady=1, padx=1)
+        # logo_label.columnconfigure(mf_col, weight=1)
+
+        # Options Frame ---------------------------------------------------------------------
+        mf_col = 0
+        mf_row = 4
+        f1_row = 0  # f1 denotes frame nesting level one; re-used for each frame
+        f1_col = f1_1st_col
+        # opts_frame = ttk.Frame(main_frame)
+        # opts_frame.grid(row=mf_row, column=mf_col, sticky="ew", pady=5, padx=(10, 0))
+
+        opts_frame = ttk.LabelFrame(main_frame, text="Workbook Options  ", padding="20", borderwidth=1, relief="ridge")
+        opts_frame.grid(row=mf_row, column=0, columnspan=2, sticky="ew", padx=(0, 0))
+        opts_frame.columnconfigure(0, weight=1)
+        opts_frame.columnconfigure(1, weight=1)
+        ttk.Checkbutton(opts_frame, text="Show Notes", variable=self.bool_shw_notes_var).grid(
+            row=0, column=0, sticky="w", pady=5
+        )
+        ttk.Checkbutton(opts_frame, text="For Future Use-1", variable=self.bool_unused_1_var, state='disabled').grid(
+            row=0, column=1, sticky="w", pady=5
+        )
+        ttk.Checkbutton(opts_frame, text="Use Full Paths in Links", variable=self.bool_rel_paths_var).grid(
+            row=1, column=0, sticky="w", pady=5
+        )
+        ttk.Checkbutton(opts_frame, text="For Future Use-2", variable=self.bool_unused_2_var, state='disabled').grid(
+            row=1, column=1, sticky="w", pady=5
+        )
+#         ttk.Checkbutton(opts_frame, text="Show Rows in Summary", variable=self.bool_summ_rows_var, state='disabled').grid(
+#             row=2, column=0, sticky="w", pady=5
+#         )
+#         ttk.Checkbutton(opts_frame, text="For Future Use-3", variable=self.bool_unused_3_var, state='disabled').grid(
+#             row=2, column=1, sticky="w", pady=5
+#         )
+        mf_row += 1
+
+        # Links Frame ---------------------------------------------------------------------
+        # Displayed Links Maximums
+        lnks_frame = ttk.LabelFrame(main_frame, text="Workbook Link Columns", padding="20", borderwidth=1, relief="ridge")
+        lnks_frame.grid(row=mf_row, column=0, columnspan=2, sticky="ew", padx=(0, 0))
+        lnks_frame.columnconfigure(1, weight=1)
+        lnks_frame.columnconfigure(3, weight=1)
+        ttk.Label(lnks_frame, text="Values Tab Maximum Links:").grid(row=0, column=0, sticky="w", pady=5, padx=(0, 10))
+        vals_spinbox = ttk.Spinbox(lnks_frame, from_=0, to=16300, textvariable=self.link_lim_vals_var, width=10)
+        vals_spinbox.grid(row=0, column=1, sticky="w", pady=5)
+        self.link_lim_vals_label = ttk.Label(lnks_frame, text="(Unlimited)" if self.cfg.link_lim_vals == 0 else "0=Unlimited")
+        self.link_lim_vals_label.grid(row=0, column=2, sticky="w", pady=5, padx=5)
+        ttk.Label(lnks_frame, text="Tags Tab Maximum Links:").grid(row=1, column=0, sticky="w", pady=5, padx=(0, 10))
+        tags_spinbox = ttk.Spinbox(lnks_frame, from_=0, to=16300, textvariable=self.link_lim_tags_var, width=10)
+        tags_spinbox.grid(row=1, column=1, sticky="w", pady=5)
+        self.link_lim_tags_label = ttk.Label(lnks_frame, text="(Unlimited)" if self.cfg.link_lim_tags == 0 else "0=Unlimited")
+        self.link_lim_tags_label.grid(row=1, column=2, sticky="w", pady=5, padx=5)
+
         self.link_lim_vals_var.trace('w', update_links_label)
         self.link_lim_tags_var.trace('w', update_links_label)
-        row += 1
+        mf_row += 1
 
-        # Buttons
+        # Executable Path Frame ---------------------------------------------------------------------
+        wbex_frame = ttk.LabelFrame(main_frame, text="Workbook Executable ", padding="20", borderwidth=1, relief="ridge")
+        wbex_frame.grid(row=mf_row, column=0, sticky="nsew", pady=5, padx=(0, 0))
+
+        # label
+        ttk.Label(wbex_frame, text="Full Path:").grid(row=0, column=0, sticky="w", pady=5)
+        wbex_path_frame = ttk.Frame(wbex_frame)
+        wbex_path_frame.grid(row=0, column=1, sticky="ew", pady=(15,5), padx=(10, 0))
+        wbex_frame.columnconfigure(1, weight=1)
+
+        # entry
+        wb_exec_entry = ttk.Entry(wbex_frame, textvariable=self.pn_wb_exec_var)
+        wb_exec_entry.grid(row=0, column=1, sticky="ew", padx=(0, 5))
+
+        # browse  button
+        ttk.Button(wbex_frame, text="Browse", command=self.browse_exec_path).grid(row=0, column=6, padx=(15, 0))
+
+        # status
+        self.wb_exec_status = ttk.Label(wbex_frame, text="", foreground="red")
+        self.wb_exec_status.grid(row=0, column=2, sticky="nw", padx=(5, 0))
+        mf_row += 1
+
+        # Buttons - Save & Run, Cancel
         button_frame = ttk.Frame(main_frame)
-        button_frame.grid(row=row, column=0, columnspan=2, pady=(30, 0))
+        button_frame.grid(row=3, column=1, rowspan=2, pady=(5, 30))
         self.save_button = ttk.Button(button_frame, text="Save & Run", command=self.on_save_and_run)
-        self.save_button.pack(side=tk.LEFT, padx=(0, 10))
+        self.save_button.pack(side=tk.TOP, pady=(5, 30))
         cancel_button = ttk.Button(button_frame, text="Cancel", command=self.on_cancel)
-        cancel_button.pack(side=tk.LEFT)
+        cancel_button.pack(side=tk.TOP)
 
         # Bind validation
         # self.vault_name_var.trace('w', lambda *args: self.validate_all_fields())
@@ -186,15 +236,6 @@ class SetupScreen:
         y = (self.root.winfo_screenheight() // 2) - (self.root.winfo_height() // 2)
         self.root.geometry(f"+{x}+{y}")
         self.root.mainloop()
-
-    # def browse_dir_vault(self):
-    #     folder_path = filedialog.askdirectory(
-    #         title="Select Obsidian Vault",
-    #         initialdir=self.vault_name_var.get() if self.vault_name_var.get() else "/"
-    #     )
-    #     if folder_path:
-    #         self.vault_name_var.set(folder_path)
-    #         self.validate_all_fields()
 
     def browse_exec_path(self):
         file_path = filedialog.askopenfilename(
@@ -215,11 +256,11 @@ class SetupScreen:
             self.dirs_skip_rel_str_var.get(), self.dir_vault
         )
         self.wb_exec_status.config(
-            text=wb_exec_msg if not wb_exec_valid else "✓ Valid",
+            text=wb_exec_msg if not wb_exec_valid else "✓",
             foreground="red" if not wb_exec_valid else "green"
         )
         self.dirs_skip_rel_str_status.config(
-            text=dirs_skip_rel_str_msg if not dirs_skip_rel_str_valid else "✓ Valid" if self.dirs_skip_rel_str_var.get().strip() else "",
+            text=dirs_skip_rel_str_msg if not dirs_skip_rel_str_valid else "✓" if self.dirs_skip_rel_str_var.get().strip() else "",
             foreground="red" if not dirs_skip_rel_str_valid else "green"
         )
         all_valid = wb_exec_valid and dirs_skip_rel_str_valid
@@ -463,7 +504,7 @@ class SysConfig:
                     found = True
                     break
             if not found:
-                return False, f"Directory '{dir_name}' not found under vault path"
+                return False, f"X"
         return True, ""
 
     @staticmethod

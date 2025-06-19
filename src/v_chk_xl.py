@@ -29,6 +29,10 @@ from src.v_chk_class_lib import PluginMan, Colors, ObsidianApp
 # Todo: Bug-018 - Needs better font support
 # Todo: Bug-020 - Exclude templates and Nests from Vault Tabs (props, tags, files, etc.)
 # Todo: Bug-022 - Remove this section and track bugs and ERs in Github
+# Todo: Bug-023 -
+# Todo: Bug-0 -
+# Todo: Bug-0 -
+# Todo: Bug-0 -
 # Todo: Bug-0 -
 
 # Todo: ER-002 - Make last file links column show "More exist!"
@@ -54,7 +58,18 @@ from src.v_chk_class_lib import PluginMan, Colors, ObsidianApp
 # Todo: ER-016 - Files needs Date Modified and Date Created columns
 # Todo: ER-017 - v_chk: routines--to isolate properties and tags in a vault--need to be made into stand alone classes. \
 #                This would allow for a built-in Search and Replace function at a later date.
-# Todo: ER-0 -
+# Todo: ER-018 - Setup should remember previous vault run settings
+# Todo: ER-019 - Add svg-icon.lucide-question icon in Files (and Pros??) for unquoted links in yaml
+# Todo: ER-020 - List files in Vault that are not in Obsidian? (Deleted attachments, images, etc.
+# Todo: ER-021 -
+# Todo: ER-022 -
+# Todo: ER-023 -
+# Todo: ER-024 -
+# Todo: ER-025 -
+# Todo: ER-026 -
+# Todo: ER-027 -
+# Todo: ER-028 -
+# Todo: ER-029 -
 # Todo: ER-0 -
 
 # Todo: ER-999 - Refactoring:
@@ -857,15 +872,15 @@ class ExcelExporter:
         return col_alpha
 
     @staticmethod
-    def xl_set_border(ws, b_parms):
+    def xl_set_border(ws: openpyxl.Workbook, b_parms: tuple) -> None:
         """
         Sets borders for a specified cell range in a worksheet with customizable options
         for border type, color, and sides.
 
         This function applies borders to cells within a given range in an Excel
-        worksheet. Users can define attributes such as the type of border (e.g., thin,
+        worksheet. Accepts attributes such as the type of border (e.g., thin,
         thick), the color of the border, and the sides of the cell to which the border
-        is applied (e.g., top, bottom, left, right, h-sides, v-sides, or all).
+        is applied (ie, top, bottom, left, right, h-sides, v-sides, or all).
 
         If no values are provided for `border_type`, `color`, or `sides`, default
         values are used. The function allows setting borders to all sides of a cell or
@@ -942,8 +957,6 @@ class ExcelExporter:
                 border_first_col = True
                 for cell in row:
                     cell.border = Border(top=border, bottom=border)
-
-        return
 
 if __name__ == "__main__":
     DBUG_LVL = 1

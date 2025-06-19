@@ -175,7 +175,7 @@ class NewWb(WbDataDef):
                         , 'notes': [
                                '* Corrupt, meaning the Python package PyYAML (6.0.2) is unable to perform a'
                              , '  "safe_load" of the notes frontmatter, or the YAML is otherwise problematic.'
-                               ' - Note that the terms "frontmatter" and "YAML" are interchangeable here.'
+                             , ' - Note that the terms "frontmatter" and "YAML" are interchangeable here.'
                              , ' - Items on this report may or may not be indicative of an error, depending '
                              , '    on how you setup and use your vault. At the very least, they should be worthy'
                              , '    of review.'
