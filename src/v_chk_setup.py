@@ -47,27 +47,20 @@ class SetupScreen:
         self.link_lim_vals_label = None
         self.link_lim_tags_label = None
         self.save_button = None
+        self.wb_col_max = 16300
+        self.wb_col_help = f"0=Unlimited; {self.wb_col_max} Maximum"
 
     def show(self):
-        # - For Scrollbar, chg 1st main_frame arg "self.root" to "scrollable_frame" and uncomment
-        # canvas = tk.Canvas(self.root)
-        # scrollbar = ttk.Scrollbar(self.root, orient="vertical", command=canvas.yview)
-        # scrollable_frame = ttk.Frame(canvas)
-        # scrollable_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-        # canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-        # canvas.configure(yscrollcommand=scrollbar.set)
-        # canvas.pack(side="left", fill="both", expand=True)
-        # scrollbar.pack(side="right", fill="y")
 
         def update_links_label(*args):
             try:
                 vals = int(self.link_lim_vals_var.get())
-                self.link_lim_vals_label.config(text="(Unlimited)" if vals == 0 else "0=Unlimited")
+                self.link_lim_vals_label.config(text="(Unlimited)" if vals == 0 else self.wb_col_help)
             except ValueError:
                 self.link_lim_vals_label.config(text="Invalid")
             try:
                 tags = int(self.link_lim_tags_var.get())
-                self.link_lim_tags_label.config(text="(Unlimited)" if tags == 0 else "0=Unlimited")
+                self.link_lim_tags_label.config(text="(Unlimited)" if tags == 0 else self.wb_col_help)
             except ValueError:
                 self.link_lim_tags_label.config(text="Invalid")
 
@@ -151,16 +144,28 @@ class SetupScreen:
         lnks_frame.columnconfigure(1, weight=1)
 
         # Label
-        ttk.Label(lnks_frame, text="Values Tab Maximum Links:").grid(row=0, column=0, sticky="w", pady=5, padx=(0, 10))
-        vals_spinbox = ttk.Spinbox(lnks_frame, from_=0, to=16300, textvariable=self.link_lim_vals_var, width=10)
+        ttk.Label(lnks_frame, text="Values Tab Maximum Links:").grid(row=0
+                                                                     , column=0
+                                                                     , sticky="w"
+                                                                     , pady=5
+                                                                     , padx=(0, 10))
+        vals_spinbox = ttk.Spinbox(lnks_frame, from_=0, to=self.wb_col_max
+                                   , textvariable=self.link_lim_vals_var, width=10)
         vals_spinbox.grid(row=0, column=1, sticky="w", pady=5)
-        self.link_lim_vals_label = ttk.Label(lnks_frame, text="(Unlimited)" if self.cfg.link_lim_vals == 0 else "0=Unlimited")
+        self.link_lim_vals_label = ttk.Label(lnks_frame
+                                        , text="(Unlimited)" if self.cfg.link_lim_vals == 0 else self.wb_col_help)
         self.link_lim_vals_label.grid(row=0, column=2, pady=5, padx=5)
 
-        ttk.Label(lnks_frame, text="Tags Tab Maximum Links:").grid(row=1, column=0, sticky="w", pady=5, padx=(0, 10))
-        tags_spinbox = ttk.Spinbox(lnks_frame, from_=0, to=16300, textvariable=self.link_lim_tags_var, width=10)
+        ttk.Label(lnks_frame, text="Tags Tab Maximum Links:").grid(row=1
+                                                                   , column=0
+                                                                   , sticky="w"
+                                                                   , pady=5
+                                                                   , padx=(0, 10))
+        tags_spinbox = ttk.Spinbox(lnks_frame, from_=0, to=self.wb_col_max
+                                   , textvariable=self.link_lim_tags_var, width=10)
         tags_spinbox.grid(row=1, column=1, sticky="w", pady=5)
-        self.link_lim_tags_label = ttk.Label(lnks_frame, text="(Unlimited)" if self.cfg.link_lim_tags == 0 else "0=Unlimited")
+        self.link_lim_tags_label = ttk.Label(lnks_frame
+                                        , text="(Unlimited)" if self.cfg.link_lim_tags == 0 else self.wb_col_help)
         self.link_lim_tags_label.grid(row=1, column=2, sticky="w", pady=5, padx=5)
 
         self.link_lim_vals_var.trace('w', update_links_label)
