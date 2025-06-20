@@ -48,21 +48,21 @@ class SetupScreen:
         self.link_lim_tags_label = None
         self.save_button = None
         self.wb_col_max = 16300
-        self.wb_col_help = f"0=Unlimited; {self.wb_col_max} Maximum"
+        self.wb_col_help = f"0=Unlimited (or {self.wb_col_max} Wkbk Max)"
 
     def show(self):
 
-        def update_links_label(*args):
+        def update_links_help(*args):
             try:
                 vals = int(self.link_lim_vals_var.get())
-                self.link_lim_vals_label.config(text="(Unlimited)" if vals == 0 else self.wb_col_help)
+                self.link_lim_vals_help.config(text="(Unlimited)" if vals == 0 else self.wb_col_help)
             except ValueError:
-                self.link_lim_vals_label.config(text="Invalid")
+                self.link_lim_vals_help.config(text="Invalid")
             try:
                 tags = int(self.link_lim_tags_var.get())
-                self.link_lim_tags_label.config(text="(Unlimited)" if tags == 0 else self.wb_col_help)
+                self.link_lim_tags_help.config(text="(Unlimited)" if tags == 0 else self.wb_col_help)
             except ValueError:
-                self.link_lim_tags_label.config(text="Invalid")
+                self.link_lim_tags_help.config(text="Invalid")
 
         # Main App Frame ---------------------------------------------------------------------
         main_frame = ttk.Frame(self.root, padding="1", borderwidth=1, relief="ridge")
@@ -149,12 +149,15 @@ class SetupScreen:
                                                                      , sticky="w"
                                                                      , pady=5
                                                                      , padx=(0, 10))
+
         vals_spinbox = ttk.Spinbox(lnks_frame, from_=0, to=self.wb_col_max
-                                   , textvariable=self.link_lim_vals_var, width=10)
+                                   , textvariable=self.link_lim_vals_var, width=8)
         vals_spinbox.grid(row=0, column=1, sticky="w", pady=5)
-        self.link_lim_vals_label = ttk.Label(lnks_frame
+
+        self.link_lim_vals_help = ttk.Label(lnks_frame
                                         , text="(Unlimited)" if self.cfg.link_lim_vals == 0 else self.wb_col_help)
-        self.link_lim_vals_label.grid(row=0, column=2, pady=5, padx=5)
+        self.link_lim_vals_help.grid(row=0, column=1, sticky="w", pady=5, padx=(80,0))
+
 
         ttk.Label(lnks_frame, text="Tags Tab Maximum Links:").grid(row=1
                                                                    , column=0
@@ -162,14 +165,16 @@ class SetupScreen:
                                                                    , pady=5
                                                                    , padx=(0, 10))
         tags_spinbox = ttk.Spinbox(lnks_frame, from_=0, to=self.wb_col_max
-                                   , textvariable=self.link_lim_tags_var, width=10)
+                                   , textvariable=self.link_lim_tags_var, width=8)
         tags_spinbox.grid(row=1, column=1, sticky="w", pady=5)
-        self.link_lim_tags_label = ttk.Label(lnks_frame
-                                        , text="(Unlimited)" if self.cfg.link_lim_tags == 0 else self.wb_col_help)
-        self.link_lim_tags_label.grid(row=1, column=2, sticky="w", pady=5, padx=5)
 
-        self.link_lim_vals_var.trace('w', update_links_label)
-        self.link_lim_tags_var.trace('w', update_links_label)
+        self.link_lim_tags_help = ttk.Label(lnks_frame
+                                        , text="(Unlimited)" if self.cfg.link_lim_tags == 0 else self.wb_col_help)
+        self.link_lim_tags_help.grid(row=1, column=1, sticky="w", pady=5, padx=(80,0))
+
+
+        self.link_lim_vals_var.trace('w', update_links_help)
+        self.link_lim_tags_var.trace('w', update_links_help)
         mf_row += 1
 
         # Executable Path Frame ---------------------------------------------------------------------
@@ -208,9 +213,9 @@ class SetupScreen:
         button_frame = ttk.Frame(main_frame)
         button_frame.grid(row=6, column=mf_col, rowspan=2, pady=(5, 30))
         self.save_button = ttk.Button(button_frame, text="Save & Run", command=self.on_save_and_run)
-        self.save_button.pack(side=tk.TOP, pady=(5, 10))
+        self.save_button.pack(side="top", pady=(5, 10))
         cancel_button = ttk.Button(button_frame, text="Cancel", command=self.on_cancel)
-        cancel_button.pack(side=tk.TOP)
+        cancel_button.pack(side="top")
         button_frame.columnconfigure(1, weight=1)
         # button_frame.pack(side=tk.TOP, pady=(5, 30))
 
@@ -436,15 +441,15 @@ class SysConfig:
         self.c_date             = self.cfg.get('c_date', datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         self.dir_batch          = self.cfg.get('dir_batch', f"{self.sys_dir}data/batch_files/")
         self.dir_wbs            = self.cfg.get('dir_wbs', f"{self.sys_dir}data/workbooks/")
-        self.dir_templates            = self.cfg.get('dir_templates', self.get_templates_dir())
+        self.dir_templates      = self.cfg.get('dir_templates', self.get_templates_dir())
         self.tab_seq            = self.cfg.get('tab_seq', '')
         self.ctot               = self.cfg.get('ctot', '')
         self.dirs_dot           = self.cfg.get('dirs_dot', '')
         self.dirs_skip_rel_str  = self.cfg.get('dirs_skip_rel_str', '')
         self.dirs_skip_abs_lst  = self.cfg.get('dirs_skip_abs_lst', '')
-        self.pn_batch          = self.cfg.get('pn_batch', '')
-        self.pn_wbs          = self.cfg.get('pn_wbs', '')
-        self.pn_cfg          = self.cfg.get('pn_cfg', '')
+        self.pn_batch           = self.cfg.get('pn_batch', '')
+        self.pn_wbs             = self.cfg.get('pn_wbs', '')
+        self.pn_cfg             = self.cfg.get('pn_cfg', '')
         self.bat_num            = self.cfg.get('bat_num', 0)
         self.bool_shw_notes     = self.cfg.get('bool_shw_notes', True)
         self.bool_rel_paths     = self.cfg.get('bool_rel_paths', True)

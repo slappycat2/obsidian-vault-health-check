@@ -29,7 +29,7 @@ from src.v_chk_class_lib import PluginMan, Colors, ObsidianApp
 # Todo: Bug-018 - Needs better font support
 # Todo: Bug-020 - Exclude templates and Nests from Vault Tabs (props, tags, files, etc.)
 # Todo: Bug-022 - Remove this section and track bugs and ERs in Github
-# Todo: Bug-023 -
+# Todo: Bug-023 - After Testing Mac & Linux, remove/hardcode Setup Screen logo resize
 # Todo: Bug-0 -
 # Todo: Bug-0 -
 # Todo: Bug-0 -
