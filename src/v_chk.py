@@ -502,9 +502,9 @@ def debugging_dump():        # v_wb = WbDataDef()
     exporter = ExcelExporter(DBUG_LVL)
     exporter.export(DBUG_LVL)
 
-        # print(f"v_chk_xl:Loading Spreadsheet: {pn_wb_exec} - {pn_wbs}")
+        # print(f"v_chk_xl:Loading Spreadsheet: {sys_pn_wb_exec} - {sys_pn_wbs}")
         # time.sleep(5)
-        # pid = Popen([pn_wb_exec, pn_wbs]).pid
+        # pid = Popen([sys_pn_wb_exec, sys_pn_wbs]).pid
 
         # shelve_file = shelve.open("v_def.db")
         # shelve_file['v_def'] = v_def
@@ -521,9 +521,9 @@ def debugging_dump():        # v_wb = WbDataDef()
         print(f"\n{lin}")
         # self.tab_def['tab_cd_table_hdr']['Row']
         print(f"Vault Health Check Complete.")
-        print(f"\nConfig Sys File: {cfg['pn_cfg']}")
-        print(f"     Next Data File: {cfg['pn_cfg']}")
-        print(f"            Wb File: {cfg['pn_wbs']}")
+        print(f"\nConfig Sys File: {cfg['sys_pn_cfg']}")
+        print(f"     Next Data File: {cfg['sys_pn_cfg']}")
+        print(f"            Wb File: {cfg['sys_pn_wbs']}")
 
         # dump wb_def
         dict_list = {

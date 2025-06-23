@@ -5,23 +5,24 @@ from src.v_chk_setup import *
 from src.v_chk_class_lib import Colors
 
 class WbDataDef:
-    def __init__(self, sys_id, dbug_lvl=0):
+    def __init__(self, dbug_lvl=0):
         self.DBUG_LVL = dbug_lvl
-        self.syscfg = SysConfig(self.DBUG_LVL)
+        self.syscfg = SysConfig()
         self.cfg = self.syscfg.cfg
-        self.cfg_sys_id = self.cfg['cfg_sys_id']
-        self.dir_batch    = self.cfg['dir_batch']
-        self.dir_wbs    = self.cfg['dir_wbs']
-        self.pn_cfg  = self.cfg['pn_cfg']
-        self.bat_num    = self.cfg['bat_num']
-        self.wb_tabs = {}
-        self.wb_data = {}
+
+        self.pn_cfg     = self.cfg['pn_cfg']
+
+        self.sys_id         = self.cfg.get(['sys_id'],'v_chk')
+        self.sys_dir_batch  = self.cfg['sys_dir_batch']
+        self.sys_dir_wbs    = self.cfg['sys_dir_wbs']
+        self.wb_tabs        = {}
+        self.wb_data        = {}
 
         self.OPEN_ON_CREATE = True
-        self.pn_batch = None
-        self.pn_wbs = None
-        self.pn_batch = None
-        self.pn_wbs = None
+        self.sys_pn_batch = None
+        self.sys_pn_wbs = None
+        self.sys_pn_batch = None
+        self.sys_pn_wbs = None
         self.tab_def = None
         self.summ = None
 
@@ -80,8 +81,8 @@ class WbDataDef:
         ["G:/dev/v_chk/data/batch_files/", "v_chk_*.yaml"]
         """
 
-        latest_file = f"{self.dir_batch}/{self.cfg_sys_id}_0000.yaml"
-        full_path = f"{self.dir_batch}/{self.cfg_sys_id}_????.yaml"
+        latest_file = f"{self.sys_dir_batch}/{self.sys_id}_0000.yaml"
+        full_path = f"{self.sys_dir_batch}/{self.sys_id}_????.yaml"
         try:
             list_of_files = glob.iglob(full_path)
             if not list_of_files:
@@ -91,16 +92,14 @@ class WbDataDef:
             # no files in dir (latest file is empty)
             pass
         except Exception as e:
-            raise Exception(f"ConfigData: Error reading config file ({self.pn_batch}) Error : {e}")
+            raise Exception(f"ConfigData: Error reading config file ({self.sys_pn_batch}) Error : {e}")
 
-        self.pn_batch = latest_file
-        self.pn_wbs = f"{self.dir_wbs}/{Path(latest_file).stem}.xlsx"
+        self.sys_pn_batch = latest_file
+        self.sys_pn_wbs = f"{self.sys_dir_wbs}/{Path(latest_file).stem}.xlsx"
         if self.DBUG_LVL > 1:
-            print(f"ConfigData: Read Last Config file: {self.pn_batch}")
-        # Add these to the wb_def (not the sys file!)
-        self.cfg['pn_batch'] = self.pn_batch
-        self.cfg['pn_wbs'] = self.pn_wbs
-        self.cfg['pn_cfg'] = self.pn_cfg
+            print(f"ConfigData: Read Last Config file: {self.sys_pn_batch}")
+        self.cfg['sys_pn_batch'] = self.sys_pn_batch
+        self.cfg['sys_pn_wbs'] = self.sys_pn_wbs
 
         return
 
@@ -110,23 +109,22 @@ class WbDataDef:
         requires: path_stub formatted as:
         ["G:/dev/v_chk/data/batch_files/"]
         """
-        self.bat_num = 0
-        c_file = f"{self.dir_batch}{self.cfg_sys_id}_{self.bat_num:04d}.yaml"
+        batch_num = 0
+        c_file = f"{self.sys_dir_batch}{self.sys_id}_{batch_num:04d}.yaml"
 
         while Path(c_file).exists():
-            self.bat_num += 1
-            c_file = f"{self.dir_batch}{self.cfg_sys_id}_{self.bat_num:04d}.yaml"
+            batch_num += 1
+            c_file = f"{self.sys_dir_batch}{self.sys_id}_{batch_num:04d}.yaml"
             if self.DBUG_LVL > 1:
                 print(f"ConfigData: Next Config file: {c_file}")
 
-        self.pn_batch = c_file
-        self.pn_wbs = f"{self.dir_wbs}{Path(c_file).stem}.xlsx"
-        self.cfg['pn_batch'] = self.pn_batch
-        self.cfg['pn_wbs'] = self.pn_wbs
-        self.cfg['bat_num'] = self.bat_num
+        self.sys_pn_batch = c_file
+        self.sys_pn_wbs = f"{self.sys_dir_wbs}{Path(c_file).stem}.xlsx"
+        self.cfg['sys_pn_batch'] = self.sys_pn_batch
+        self.cfg['sys_pn_wbs'] = self.sys_pn_wbs
 
         if self.DBUG_LVL > 1:
-            print(f"ConfigData: Init Next Config file: {self.pn_batch}")
+            print(f"ConfigData: Init Next Config file: {self.sys_pn_batch}")
 
         # Init everything except cfg, as this is a new file...
         self.tab_def = {}
@@ -174,13 +172,13 @@ class WbDataDef:
         return
 
     def write_bat_data(self):
-        if not self.pn_batch:
+        if not self.sys_pn_batch:
             self.get_next_bat()
 
         # self.wb_def_pack()   # This clobbers wb_data during tags! Upd explicitly!
 
         try:
-            with open(self.pn_batch, 'w') as yaml_file:
+            with open(self.sys_pn_batch, 'w') as yaml_file:
                 # yaml.dump(range(50), width=50, indent=4)
                 yaml.dump({
                     'wb_def':     self.wb_def
@@ -190,36 +188,27 @@ class WbDataDef:
             return
 
         except Exception as e:
-            print(f"ConfigData-write-wb_def ({self.pn_batch}): Error in Save Config: {e}")
+            print(f"ConfigData-write-wb_def ({self.sys_pn_batch}): Error in Save Config: {e}")
             sys.exit(1)
 
 
     def read_bat_data(self):
-        # These comments may be used for the next ver version...
-        # For now, we just return a copy of wb_def, and that's it.
-        """Accepts a string that may contain C, T and/or D, for Cfg, Tabs & Data.
-        If the flag is not set, then the whole wb_def is returned in a temp value.
-        This avoids clobbering any existing wb_def.
-        If the flag is set, then the wb_def is unpacked into the appropriate"""
-        # if op_flg is not None:
-        #     op_flg = op_flg.upper()
-
-        if self.pn_batch == '' or self.pn_batch is None:
+        if self.sys_pn_batch == '' or self.sys_pn_batch is None:
             self.get_last_bat()
             if self.DBUG_LVL > 1:
-                print(f"ConfigData-read_config: Loaded last config file: {self.pn_batch}")
+                print(f"ConfigData-read_config: Loaded last config file: {self.sys_pn_batch}")
         else:
             if self.DBUG_LVL > 1:
-                print(f"ConfigData-read_config: Reading Config file: {self.pn_batch}")
+                print(f"ConfigData-read_config: Reading Config file: {self.sys_pn_batch}")
         try:
-            with open(self.pn_batch, 'r') as file_y:
+            with open(self.sys_pn_batch, 'r') as file_y:
                 bat_data = file_y.read()
 
             wb_def_temp = yaml.safe_load(bat_data)
             wb_def_temp = wb_def_temp.get('wb_def', {})
 
         except Exception as e:
-            raise Exception(f"ConfigData: Error reading config file ({self.pn_batch}) Error : {e}")
+            raise Exception(f"ConfigData: Error reading config file ({self.sys_pn_batch}) Error : {e}")
 
         return wb_def_temp
 

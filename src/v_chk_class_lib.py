@@ -1,8 +1,14 @@
-import platform
+from dataclasses import dataclass, field
+from datetime import  datetime
 import os
+import platform
 
 from pathlib import Path
 import json
+
+@dataclass
+class Vaults:
+    sys_obs_vaults: dict = field(default_factory=dict)
 
 class JsonFile:
     """
@@ -401,34 +407,36 @@ class PluginMan:
                 print(f"  mj_file: {mj_file}")
                 raise Exception(f"PluginMan: get_plugs_lib-Error: {e}")
 
+@dataclass
 class ObsidianApp:
     """
     ObsidianApp class is a placeholder for Obsidian application related methods.
     Currently, it does not contain any methods or attributes.
     possible platforms: Linux, Darwin, Windows
     """
-    def __init__(self):
-        self.obs_os = platform.system()
-        self.dir_obs_json = None
-        self.dir_obs_vault = None
-        self.pn_obs_json = None
-        self.obs_vaults_open = []
-        self.obs_vaults = {}
-        self.dflt_vault_name = None
-        self.dflt_wb_exec = self.set_dflt_wb_exec(self.obs_os)
 
-        home_dir = Path.home()
-        home_dir_str = str(home_dir)
+    cur_obs_vaults      : dict = field(default_factory=dict)
+    dir_obs_json        : str = ''
+    dir_obs_vault       : str = ''
+    pn_obs_json         : str = ''
+    dflt_vault_name     : str = ''
+    obs_os              : str = platform.system()
+    # sys_obs_vaults_open : list = field(default_factory=list)
+
+    def load_current_obs_vaults(self, sys_obs_vaults):
+        dir_obs_cfg = Path.home()
+        dir_obs_cfg_str = str(dir_obs_cfg)
 
         if self.obs_os == 'Windows':
-            home_dir_str = os.getenv('APPDATA', '')           # Not really Home, but it works for now...
+            dir_obs_cfg_str = os.getenv('APPDATA', '')
 
         obs_json_locs = {
-              'Linux': f'{home_dir_str}/.config/obsidian/'
-            , 'Darwin': f'{home_dir_str}/Library/Application Support/obsidian/'
-            , 'Windows': f'{home_dir_str}/obsidian/'
+              'Linux':   f'{dir_obs_cfg_str}/.config/obsidian/'
+            , 'Darwin':  f'{dir_obs_cfg_str}/Library/Application Support/obsidian/'
+            , 'Windows': f'{dir_obs_cfg_str}/obsidian/'
         }
 
+        # load obsidian json file
         self.dir_obs_json = obs_json_locs[self.obs_os]
         self.pn_obs_json = f"{self.dir_obs_json}obsidian.json"
         obs_json_obj = JsonFile(self.pn_obs_json)
@@ -441,6 +449,8 @@ class ObsidianApp:
 
         vaults_dict = obs_json_dict['vaults']
 
+        self.dflt_vault_name = ""
+        any_valid_vault_name = ""
         for vault_id, vault_dict in vaults_dict.items():
             if 'path' in vault_dict:
                 v_dir = Path(vault_dict['path'])
@@ -449,34 +459,20 @@ class ObsidianApp:
                     continue
                 v_name = f'{v_dir.stem} ({(v_dir.parent)})'
                 v_record = [vault_id, str(v_dir)]
-                self.dflt_vault_name = v_name
+                any_valid_vault_name = v_name
 
-                self.obs_vaults[v_name] = v_record
+                self.cur_obs_vaults[v_name] = v_record
+
+                # The last 'open' vault will be True, even if Obsidian is not currently open.
                 if 'open' in vault_dict and vault_dict['open']:
                     self.dflt_vault_name = v_name
-                    self.obs_vaults_open.append(v_name)
+                    # self.cur_obs_vaults_open.append(v_name)
 
-        if not self.obs_vaults:
+        if not self.dflt_vault_name:
+            self.dflt_vault_name = any_valid_vault_name  # just in case!
+
+        if not self.cur_obs_vaults:
             raise Exception(f"ObsidianApp: No Vaults with a 'path' key in obsidian.json")
-
-    def set_dflt_wb_exec(self, cfg_os):
-        wb_exec = ""
-        common_execs = {
-              'Linux': ['scalc']
-            , 'Darwin': ['open -a Numbers.app ']
-            , 'Windows': ['C:/Program Files/Microsoft Office/root/Office16/EXCEL.EXE', 'C:/Program Files/LibreOffice/program/scalc.exe']
-         }
-
-        for wb_app in common_execs[cfg_os]:
-            if cfg_os != 'Windows':
-                wb_exec = wb_app
-                break
-            elif Path(wb_app).exists():
-                wb_exec = wb_app
-                break
-
-        return wb_exec
-
 
 def main() -> None:
     pass

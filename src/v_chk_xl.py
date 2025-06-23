@@ -61,9 +61,9 @@ from src.v_chk_class_lib import PluginMan, Colors, ObsidianApp
 # Todo: ER-018 - Setup should remember previous vault run settings
 # Todo: ER-019 - Add svg-icon.lucide-question icon in Files (and Pros??) for unquoted links in yaml
 # Todo: ER-020 - List files in Vault that are not in Obsidian? (Deleted attachments, images, etc.
-# Todo: ER-021 -
-# Todo: ER-022 -
-# Todo: ER-023 -
+# Todo: ER-021 - Add Hidden Link Columns Warning--And add option to suppress
+# Todo: ER-022 - Options: Open Workbook on Create and Logging Level
+# Todo: ER-023 - Create an extra tab (Log) showing:  Batch Numbers, Create Dates, Ctots and Vault Names
 # Todo: ER-024 -
 # Todo: ER-025 -
 # Todo: ER-026 -
@@ -75,6 +75,11 @@ from src.v_chk_class_lib import PluginMan, Colors, ObsidianApp
 # Todo: ER-999 - Refactoring:
 #   - Use Class sub-classes for tab definitions? Where is there overlap?
 #   - Clean up comments and print statements
+
+# Todo - Installation Notes - This is going to need an install script, like Opus,
+#        in order to build the directory structure, and include assets. Also, if someone puts the script in
+#        a directory that already contains a data, img, conf, CONFIG.yaml, etc.
+#        fireworks will ensue!
 
 # Done
 # Todo: Bug-023 - Highlight use of uppercase. Done. (Can only be done in Files)
@@ -118,7 +123,7 @@ class ExcelExporter:
         self.tab_def = {}
         self.dbug = False
         self.wb_tabs_open = {}
-        self.c_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.v_chk_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.TAG_TOT_COLS = 20  # Set this to the maximum columns to be added to table (w/o the step)
         self.TAG_BEG_COL = 7  # set the to the first column, ie, where to start
         self.PROP_TOT_COLS = 13  # Set this to the maximum columns to be added to table (w/o the step)
@@ -140,22 +145,21 @@ class ExcelExporter:
         self.tab_id_sub_key = ''
         self.tabs_built = {}
         self.wb_tabs_done = {}
-        self.o_app = ObsidianApp()
         cfg_setup = WbDataDef(self.DBUG_LVL)
         self.xyml_descs = cfg_setup.xyml_descs
 
         self.wb_def = cfg_setup.read_bat_data()
         self.cfg = self.wb_def.get('cfg', {})
 
-        self.tab_seq = self.cfg['tab_seq']   # ['summ', 'pros', 'tags', 'dups', 'xyml']  # ['summ', 'pros', 'tags', 'dups']
+        self.sys_tab_seq = self.cfg['sys_tab_seq']   # ['summ', 'pros', 'tags', 'dups', 'xyml']  # ['summ', 'pros', 'tags', 'dups']
         self.dir_vault = self.cfg['dir_vault']
         self.vault_id = self.cfg['vault_id']
-        self.pn_wbs = self.cfg['pn_wbs']
+        self.sys_pn_wbs = self.cfg['sys_pn_wbs']
         if self.DBUG_LVL >= 0:
-            print(f"Building workbook {self.pn_wbs}...")
-        self.pn_batch = self.cfg['pn_cfg']
-        self.bat_num = self.cfg['bat_num']
-        self.pn_wb_exec = self.cfg['pn_wb_exec']
+            print(f"Building workbook {self.sys_pn_wbs}...")
+        self.sys_pn_batch = self.cfg['sys_pn_cfg']
+        self.sys_bat_num = self.cfg['sys_bat_num']
+        self.sys_pn_wb_exec = self.cfg['sys_pn_wb_exec']
 
         self.wb_data = self.wb_def.get('wb_data', {})
         self.obs_props = self.wb_data.get('obs_props', {})
@@ -180,22 +184,22 @@ class ExcelExporter:
         self.plugin_lib = PluginMan(self.dir_vault)
 
         if self.DBUG_LVL > 8:
-            print(f"ExcelExport - cfg.pn_wb_exec: {self.pn_wb_exec}")
+            print(f"ExcelExport - cfg.sys_pn_wb_exec: {self.sys_pn_wb_exec}")
 
-        self.exl_file = Path(self.pn_wb_exec)
+        self.exl_file = Path(self.sys_pn_wb_exec)
 
     def export(self, dbug_lvl):
     # =================================================================================
         self.DBUG_LVL = dbug_lvl
         if self.DBUG_LVL > 1:
-            print(f"ExcelExport.export - pn_wb_exec: {self.pn_wb_exec}")
+            print(f"ExcelExport.export - sys_pn_wb_exec: {self.sys_pn_wb_exec}")
 
         # Create the workbook instance
         wb = openpyxl.Workbook()
 
         wb = self.initialize_all_tabs(wb)
 
-        for tab_id in self.tab_seq:
+        for tab_id in self.sys_tab_seq:
             if self.DBUG_LVL > 3:
                 print(f"Exporting tab: {tab_id}")
 
@@ -729,14 +733,14 @@ class ExcelExporter:
         return col_idx, cell
 
     def initialize_all_tabs(self, wb):
-        live_tab_seq = []
-        for tab_id in self.tab_seq:
+        live_sys_tab_seq = []
+        for tab_id in self.sys_tab_seq:
             tab_def = self.wb_def['wb_tabs'][tab_id]
             data_src = tab_def['data_src'][0]
             if len(self.wb_def['wb_data'][data_src]) == 0:
                 continue
             else:
-                live_tab_seq.append(tab_id)
+                live_sys_tab_seq.append(tab_id)
 
             tab_name = tab_def['tab_name']
             tab_color = tab_def['tab_color']
@@ -758,16 +762,16 @@ class ExcelExporter:
             tab.sheet_properties.tabColor = tab_color
             tab.sheet_view.showGridLines = showGridLines
 
-        self.tab_seq = live_tab_seq
+        self.sys_tab_seq = live_sys_tab_seq
 
         return wb
 
     def save_workbook(self, wb):
         if self.DBUG_LVL >= 0:
-            print(f"Saving Spreadsheet: {self.pn_wbs}")
+            print(f"Saving Spreadsheet: {self.sys_pn_wbs}")
 
         # save and load workbook
-        if os.path.isfile(self.pn_wbs):
+        if os.path.isfile(self.sys_pn_wbs):
             try_again = True
             w_time = 2 # secs
             retry_max = 60
@@ -775,27 +779,27 @@ class ExcelExporter:
             while try_again:
                 try:
                     retry_count += 1
-                    os.remove(self.pn_wbs)
+                    os.remove(self.sys_pn_wbs)
                     try_again = False
                 except PermissionError:
-                    print(f"Attempt {retry_count} to save {self.pn_wbs}...")
+                    print(f"Attempt {retry_count} to save {self.sys_pn_wbs}...")
                     if retry_count < retry_max:
-                        print(f"File {self.pn_wbs} must be closed. Attempt {retry_count + 1} (of {retry_max} max.) will begin in {w_time} seconds...\n")
+                        print(f"File {self.sys_pn_wbs} must be closed. Attempt {retry_count + 1} (of {retry_max} max.) will begin in {w_time} seconds...\n")
                         time.sleep(w_time)
                     else:
-                        print(f"File {self.pn_wbs} must be closed. Max Retries ({retry_max}) exceeded. {__file__} will now exit.")
+                        print(f"File {self.sys_pn_wbs} must be closed. Max Retries ({retry_max}) exceeded. {__file__} will now exit.")
                         sys.exit(1)
 
                 except Exception as e:
-                    raise Exception(f"Error removing file {self.pn_wbs}: {e}")
+                    raise Exception(f"Error removing file {self.sys_pn_wbs}: {e}")
 
-        wb.save(self.pn_wbs)
+        wb.save(self.sys_pn_wbs)
 
         if self.OPEN_ON_CREATE:
             self.load_workbook()
 
     def load_workbook(self):
-        pid = Popen([self.pn_wb_exec, self.pn_wbs]).pid
+        pid = Popen([self.sys_pn_wb_exec, self.sys_pn_wbs]).pid
         return pid
 
     def obs_hyperlink(self, file):
@@ -968,20 +972,20 @@ if __name__ == "__main__":
     # wb = WbDataDef(DBUG_LVL)
     # wbdef = cfg.read_cfg_data()
     # cfg = wbdef['cfg']
-    # pn_wbs = cfg['pn_wbs']
-    # pn_wb_exec = cfg['pn_wb_exec']
+    # sys_pn_wbs = cfg['sys_pn_wbs']
+    # sys_pn_wb_exec = cfg['sys_pn_wb_exec']
 
     # wb_cfg = Wb_Cfg()
 
     # if cfg:
-    #     print(f"v_chk_xl: Using last saved config: {pn_wbs}")
+    #     print(f"v_chk_xl: Using last saved config: {sys_pn_wbs}")
     #     exporter = ExcelExporter(DBUG_LVL)
     #     exporter.export(DBUG_LVL)
 #
-    #     print(f"v_chk_xl:Loading Spreadsheet: {pn_wb_exec} - {pn_wbs}")
+    #     print(f"v_chk_xl:Loading Spreadsheet: {sys_pn_wb_exec} - {sys_pn_wbs}")
     #     time.sleep(5)
 #
-    #     # pid = Popen([pn_wb_exec, pn_wbs]).pid
+    #     # pid = Popen([sys_pn_wb_exec, sys_pn_wbs]).pid
     # else:
-    #     print(f"v_chk_xl: Error reading config in main: {pn_wbs}")
+    #     print(f"v_chk_xl: Error reading config in main: {sys_pn_wbs}")
     #     print(f"v_chk_xl: Exiting...")

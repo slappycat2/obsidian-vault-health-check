@@ -1483,7 +1483,7 @@ class DefSumm(NewTab):
         super().__init__(self.tab_id, wb_obj)
         ctot = self.cfg['ctot']
         dir_vault_txt = f"Vault Path: {self.cfg['dir_vault']}"
-        c_date = self.cfg['c_date']
+        v_chk_date = self.cfg['v_chk_date']
         comm = wb_obj.tab_common
 
         clr1, txt1, clr2, txt2, table_style = self.colors.get_tab_clrs(self.tab_id)
@@ -1566,7 +1566,7 @@ class DefSumm(NewTab):
             , 'img-01':    [  3,  1, '', sz,  0, '', '',     False, False, 'left', "../img/v_chkBanner2.png"]
             , 'row-01':    [  3,  1, '', 72,  0, wht0, wht0, False, False, 'left', "."]
             , 'dir-vault': [  3,  2, '', 16,  0, '','', True, False, 'left', dir_vault_txt]
-            , 'c-date':    [ 10,  2, '', 10,  0, '','', True, False, 'right', c_date]
+            , 'c-date':    [ 10,  2, '', 10,  0, '','', True, False, 'right', v_chk_date]
             , 'version':   [  3, 31, '', sz,  0, '', '',  False, False, 'left', val_version]
             , 'donate':    [ 10, 31, '', sz,  0, '', '',  False, False, 'right', val_donate]
             , 'Notes-hdr': [ 14,  2, '', 16, 32, txt1, clr1, True, False, 'left', 'Notes: ']

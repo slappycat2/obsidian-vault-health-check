@@ -201,14 +201,14 @@ if __name__ == "__main__":
     # wb_cfg = Wb_Cfg()
 
     if cfg:
-        print(f"v_chk_xl: Using last saved config: {cfg.v_chk_pn_wbs}")
+        print(f"v_chk_xl: Using last saved config: {cfg.v_chk_sys_pn_wbs}")
         exporter = ExcelExporter(cfg)
         exporter.export_wb(cfg)
 
-        print(f"v_chk_xl:Loading Spreadsheet: {cfg.pn_wb_exec} - {cfg.v_chk_pn_wbs}")
+        print(f"v_chk_xl:Loading Spreadsheet: {cfg.sys_pn_wb_exec} - {cfg.v_chk_sys_pn_wbs}")
         time.sleep(5)
 
-        # pid = Popen([cfg.pn_wb_exec, cfg.v_chk_pn_wbs]).pid
+        # pid = Popen([cfg.sys_pn_wb_exec, cfg.v_chk_sys_pn_wbs]).pid
     else:
-        print(f"v_chk_xl: Error reading config in main: {cfg.v_chk_pn_wbs}")
+        print(f"v_chk_xl: Error reading config in main: {cfg.v_chk_sys_pn_wbs}")
         print(f"v_chk_xl: Exiting...")
