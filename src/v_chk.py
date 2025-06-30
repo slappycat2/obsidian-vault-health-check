@@ -52,8 +52,8 @@ class VaultHealthCheck:   # WbConfig
         self.plugin_id_def = self.wb_data_obj.plugin_id_def
         self.wb_def = self.wb_data_obj.wb_def
 
-        self.cfg = self.wb_def.get('cfg', {})
-        self.dir_templates = Path(self.cfg.get('dir_templates', ''))
+        self.sys_cfg = self.wb_def.get('sys_cfg', {})
+        self.dir_templates = Path(self.sys_cfg.get('dir_templates', ''))
         self.isTemplate = False
         self.wb_data = self.wb_def.get('wb_data', {})
         self.obs_props = self.wb_data.get('obs_props', {})
@@ -66,12 +66,15 @@ class VaultHealthCheck:   # WbConfig
         self.obs_nests = self.wb_data.get('obs_nests', {})
         self.obs_plugs = self.wb_data.get('obs_plugs', {})
         self.rgx_boundary = re.compile('^---\\s*$', re.MULTILINE)
+        # noinspection RegExpRedundantEscape
         self.rgx_body_pros = re.compile('(^|(\\[))([)([A-Za-z0-9_]+)[:]{2}(.*?)(\\]?\\]?)($|\\])')
         self.rgx_tag_pattern = re.compile('[^|\w]#(\w+)', re.MULTILINE)
+        # noinspection RegExpRedundantEscape
         self.rgx_noTZdatePattern = re.compile(r"([0-9]{4})[-\/]([0-1]?[0-9]{1})[-\/]([0-3])?([0-9]{1})(\s+)([0-9]{2}:[0-9]{2}:[0-9]{2})(.*)", re.MULTILINE)
         self.rgx_code_blocks = re.compile(r'^`{3}[\s\S]*?^`{3}', re.MULTILINE)
         self.rgx_code_inline = re.compile(r'`[^`]*`', re.MULTILINE)
         self.rgx_templater_strs = r"<%[\*]?\s*.*?\s*%>"
+        # noinspection RegExpRedundantEscape
         self.rgx_wikilinks = re.compile(r"\[\[.*?\]\]", re.MULTILINE)
 
         self.filepath = ""
@@ -80,16 +83,16 @@ class VaultHealthCheck:   # WbConfig
         self.plugin_id = ""
         self.ctot = [0] * 13
 
-        plugin_lib = PluginMan(self.cfg['dir_vault'])
+        plugin_lib = PluginMan(self.sys_cfg['dir_vault'])
         self.obs_plugs = plugin_lib.get_obs_plugs()
 
         self.process_vault()
 
     def process_vault(self):
         if self.DBUG_LVL >= 0:
-            print(f"Gathering statistics on vault Id: {self.cfg['vault_id']}  Path: {self.cfg['dir_vault']}...")
+            print(f"Gathering statistics on vault Id: {self.sys_cfg['vault_id']}  Path: {self.sys_cfg['dir_vault']}...")
 
-        v_path_obj = Path(self.cfg['dir_vault'])
+        v_path_obj = Path(self.sys_cfg['dir_vault'])
         for md_file in v_path_obj.rglob("*.md"):
             self.ctot[0] += 1
 
@@ -111,12 +114,12 @@ class VaultHealthCheck:   # WbConfig
 
             x_dir_test = False
             for x_dir in md_file.parts:
-                if x_dir in self.cfg['dirs_skip_rel_str']:
+                if x_dir in self.sys_cfg['skip_rel_str']:
                     x_dir_test = True
                     continue  # this only exits this for loop
             if x_dir_test:
                 self.ctot[2] += 1
-                # print(f"Skipping file: {md_file} is in dirs_skip_rel_str")
+                # print(f"Skipping file: {md_file} is in skip_rel_str")
                 continue # this gets the next file...
 
             if self.DBUG_LVL > 2:
@@ -142,13 +145,13 @@ class VaultHealthCheck:   # WbConfig
         self.ctot[11] = self.get_max_links(self.obs_props)
         self.ctot[12] = self.get_max_links(self.obs_atags)
 
-        self.cfg['ctot'] = self.ctot
+        self.sys_cfg['ctot'] = self.ctot
 
         # Vault processing complete! Get wb tab defs,
         self.wb_data_obj.write_bat_data()
 
         if self.DBUG_LVL > 0:
-            print(f"Vault ({self.cfg['dir_vault']}) processing complete.")
+            print(f"Vault ({self.sys_cfg['dir_vault']}) processing complete.")
 
         return
 
@@ -367,8 +370,7 @@ class VaultHealthCheck:   # WbConfig
                 self.upd_obs_props(self.obs_props, k, v, self.filepath)
 
         self.upd_obs_files(self.obs_files, k, v, self.filepath)
-        # upd_props_dict(cfg.props, k, v, self.filepath)
-        # upd_props_dict(self.file_props, k, v, self.filepath)
+
         return
 
     def upd_obs_files(self, o_files, ukey, uval, fkey):
@@ -511,9 +513,9 @@ def debugging_dump():        # v_wb = WbDataDef()
         # shelve_file.close()
 
     if DBUG_LVL > 90:
-        wb_cfg = WbDataDef(DBUG_LVL)
-        wb_def = wb_cfg.read_cfg_data()
-        cfg     = wb_def.get('cfg', {})
+        wbdd_obj = WbDataDef(DBUG_LVL)
+        wb_def  = wbdd_obj.read_wb_data()
+        sys_cfg = wb_def.get('sys_cfg', {})
         wb_tabs = wb_def.get('wb_tabs', {})
         wb_data = wb_def.get('wb_data', {})
 
@@ -521,13 +523,13 @@ def debugging_dump():        # v_wb = WbDataDef()
         print(f"\n{lin}")
         # self.tab_def['tab_cd_table_hdr']['Row']
         print(f"Vault Health Check Complete.")
-        print(f"\nConfig Sys File: {cfg['sys_pn_cfg']}")
-        print(f"     Next Data File: {cfg['sys_pn_cfg']}")
-        print(f"            Wb File: {cfg['sys_pn_wbs']}")
+        print(f"\nConfig Sys File: {sys_cfg['sys_pn_cfg']}")
+        print(f"     Next Data File: {sys_cfg['sys_pn_batch']}")
+        print(f"            Wb File: {sys_cfg['sys_pn_wbs']}")
 
         # dump wb_def
         dict_list = {
-              'cfg': cfg
+              'sys_cfg': sys_cfg
             , 'wb_tabs': wb_tabs
             , 'wb_data': wb_data
            # , 'tab_def': vc_def.wb_tabs['pros']
@@ -549,6 +551,7 @@ class SplashScreen(tk.Tk):
         self.overrideredirect(True) # Remove window decorations for splash effect
         self.configure(bg=SPLASH_BG)
         self.logo_img = self.load_logo(logo_path)
+        # noinspection PyTypeChecker
         self.logo_label = tk.Label(self, image=self.logo_img, bg=SPLASH_BG)
         self.logo_label.pack(expand=True)
 
@@ -577,6 +580,7 @@ class SplashScreen(tk.Tk):
 
     def load_logo(self, path):
         img = Image.open(path)
+        # noinspection PyUnresolvedReferences
         img = img.resize((128, 128), Image.LANCZOS)
         return ImageTk.PhotoImage(img)
 
@@ -603,8 +607,14 @@ def main():
     splash.after(500, lambda: run_main(splash))
     splash.mainloop()
 
+    # from tkinter.__init__
+    #  # .after() can be called without the "func" argument, but it is basically never what you want.
+    #  # It behaves like time.sleep() and freezes the GUI app.
+    #  def after(self, ms: int | Literal["idle"], func: Callable[[Unpack[_Ts]], object], *args: Unpack[_Ts]) -> str: ...
+    #  # after_idle is essentially partialmethod(after, "idle")
+    #  def after_idle(self, func: Callable[[Unpack[_Ts]], object], *args: Unpack[_Ts]) -> str: ...
 
-def run_main(splash):
+def run_main(splash: object) -> None:
     DBUG_LVL = 0
     phase_txt = [
         "Initializing Vault Health Check...",

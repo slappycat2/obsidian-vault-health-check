@@ -2,13 +2,12 @@ from dataclasses import dataclass, field
 from datetime import  datetime
 import os
 import platform
+import copy
 
 from pathlib import Path
 import json
 
-@dataclass
-class Vaults:
-    sys_obs_vaults: dict = field(default_factory=dict)
+# from src.v_chk_setup import SysConfig
 
 class JsonFile:
     """
@@ -35,7 +34,6 @@ class JsonFile:
 
         except Exception as e:
             raise Exception(f"JsonFile: load_json_file attempting to read: ({json_path}) - Error: {e}")
-
 
 class Colors:
     # There are 16 million colors, these are ones I picked to play with,
@@ -410,22 +408,26 @@ class PluginMan:
 @dataclass
 class ObsidianApp:
     """
-    ObsidianApp class is a placeholder for Obsidian application related methods.
+    ObsidianApp class is a placeholder for the currently installed Obsidian
+     application settings and related methods.
+    sys_vlts contains a dictionary of all known vaults and their settings from
+    previous runs. However, each time v_chk is run, a check must be done to only use
+     vaults that currently exist in obsidian.json.
     Currently, it does not contain any methods or attributes.
     possible platforms: Linux, Darwin, Windows
     """
 
-    cur_obs_vaults      : dict = field(default_factory=dict)
-    dir_obs_json        : str = ''
-    dir_obs_vault       : str = ''
+    sys_vlts            : dict = field(default_factory=dict)
+    cur_vlts            : dict = field(default_factory=dict)
     pn_obs_json         : str = ''
     dflt_vault_name     : str = ''
     obs_os              : str = platform.system()
     # sys_obs_vaults_open : list = field(default_factory=list)
 
-    def load_current_obs_vaults(self, sys_obs_vaults):
+    def load_current_obs_vaults(self):
         dir_obs_cfg = Path.home()
         dir_obs_cfg_str = str(dir_obs_cfg)
+        self.cur_vlts = {}
 
         if self.obs_os == 'Windows':
             dir_obs_cfg_str = os.getenv('APPDATA', '')
@@ -437,15 +439,15 @@ class ObsidianApp:
         }
 
         # load obsidian json file
-        self.dir_obs_json = obs_json_locs[self.obs_os]
-        self.pn_obs_json = f"{self.dir_obs_json}obsidian.json"
+        dir_obs_json = obs_json_locs[self.obs_os]
+        self.pn_obs_json = f"{dir_obs_json}obsidian.json"
         obs_json_obj = JsonFile(self.pn_obs_json)
         if obs_json_obj.err_msg:
             raise Exception(f"ObsidianApp: {obs_json_obj.err_msg}")
 
         obs_json_dict = obs_json_obj.json_data
         if 'vaults' not in obs_json_dict:
-            raise Exception(f"ObsidianApp: No vaults found in obsidian.json at {self.dir_obs_json}")
+            raise Exception(f"ObsidianApp: No vaults found in obsidian.json at {dir_obs_json}")
 
         vaults_dict = obs_json_dict['vaults']
 
@@ -456,23 +458,124 @@ class ObsidianApp:
                 v_dir = Path(vault_dict['path'])
 
                 if not v_dir.is_dir():
-                    continue
-                v_name = f'{v_dir.stem} ({(v_dir.parent)})'
-                v_record = [vault_id, str(v_dir)]
-                any_valid_vault_name = v_name
+                    continue                    # if the vault dir doesn't exist, skip it
+                v_name = f'{v_dir.name} - ({v_dir.parent})'
+                # v_record = [vault_id, str(v_dir)]
+                if v_name not in self.sys_vlts:
+                    # self.sys_obs_vaults[v_name] = {
+                    #      'vault_name': v_name
+                    #     , 'vault_id': vault_id
+                    #     , 'dir_vault': str(v_dir)
+                    #     , 'dir_templates': ''
+                    #     , 'skip_rel_str': ''
+#
+                    #     , 'skip_abs_lst': []
+                    #     , 'dirs_dot': []
+                    #     , 'ctot': [0] * 13
+#
+                    #     , 'bool_shw_notes': True
+                    #     , 'bool_rel_paths': True
+                    #     , 'bool_summ_rows': True
+                    #     , 'bool_unused_1': False
+                    #     , 'bool_unused_2': False
+                    #     , 'bool_unused_3': False
+                    #     , 'link_lim_vals': 0
+                    #     , 'link_lim_tags': 0
+                    #     , 'v_chk_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    # }
+                    v_rec_dict = self.vault_pack(vlt_name=v_name, src_v_dict={}, dst_v_dict={})
+                    v_rec_dict['vault_id']  = vault_id
+                    v_rec_dict['dir_vault'] = str(v_dir)
+                    self.cur_vlts[v_name] = v_rec_dict
+                else:
+                    self.cur_vlts[v_name].deepcopy(self.sys_vlts[v_name])
 
-                self.cur_obs_vaults[v_name] = v_record
+                any_valid_vault_name = v_name
 
                 # The last 'open' vault will be True, even if Obsidian is not currently open.
                 if 'open' in vault_dict and vault_dict['open']:
                     self.dflt_vault_name = v_name
-                    # self.cur_obs_vaults_open.append(v_name)
+                    # self.sys_vlts_open.append(v_name)
 
         if not self.dflt_vault_name:
-            self.dflt_vault_name = any_valid_vault_name  # just in case!
+            self.dflt_vault_name = any_valid_vault_name  # force a default, in case one isn't OPEN
 
-        if not self.cur_obs_vaults:
+        if not self.cur_vlts:
             raise Exception(f"ObsidianApp: No Vaults with a 'path' key in obsidian.json")
+        else:
+            self.sys_vlts.update(self.cur_vlts)
+
+    @staticmethod
+    def vault_pack(vlt_name: str, src_v_dict: dict, dst_v_dict: dict) -> dict:
+        dst_v_dict['vault_name']         = src_v_dict.get('vault_name', vlt_name)
+        dst_v_dict['vault_id']           = src_v_dict.get('vault_id', '')
+        dst_v_dict['dir_vault']          = src_v_dict.get('dir_vault', '')
+        dst_v_dict['sys_pn_batch']       = src_v_dict.get('sys_pn_batch', '')
+        dst_v_dict['sys_pn_wbs']         = src_v_dict.get('sys_pn_wbs', '')
+        dst_v_dict['dir_templates']      = src_v_dict.get('dir_templates', '')
+        dst_v_dict['skip_rel_str']       = src_v_dict.get('skip_rel_str', '')
+        dst_v_dict['skip_abs_lst']       = src_v_dict.get('skip_abs_lst', [])
+        dst_v_dict['dirs_dot']           = src_v_dict.get('dirs_dot', [])
+        dst_v_dict['ctot']               = src_v_dict.get('ctot', [0] * 13)
+        dst_v_dict['bool_shw_notes']     = src_v_dict.get('bool_shw_notes', True)
+        dst_v_dict['bool_rel_paths']     = src_v_dict.get('bool_rel_paths', True)
+        dst_v_dict['bool_summ_rows']     = src_v_dict.get('bool_summ_rows', True)
+        dst_v_dict['bool_unused_1']      = src_v_dict.get('bool_unused_1',  False)
+        dst_v_dict['bool_unused_2']      = src_v_dict.get('bool_unused_2',  False)
+        dst_v_dict['bool_unused_3']      = src_v_dict.get('bool_unused_3',  False)
+        dst_v_dict['link_lim_vals']      = src_v_dict.get('link_lim_vals', 0)
+        dst_v_dict['link_lim_tags']      = src_v_dict.get('link_lim_tags', 0)
+        dst_v_dict['v_chk_date']         = src_v_dict.get('v_chk_date',
+                                                      datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
+        return dst_v_dict
+
+@dataclass
+class ObsVault:
+    vault_name:              str  = field(default=None)
+    vault_id:                str  = field(default=None)
+    dir_vault:               str  = field(default=None)
+    dir_templates:           str  = field(default=None)
+    skip_rel_str:       str  = field(default=None)
+    skip_abs_lst:       list = field(default_factory=list)
+    dirs_dot:                list = field(default_factory=list)
+    ctot:                    list = field(default_factory=list)
+    bool_shw_notes:          bool = field(default=True)
+    bool_rel_paths:          bool = field(default=True)
+    bool_summ_rows:          bool = field(default=True)
+    bool_unused_1:           bool = field(default=False)
+    bool_unused_2:           bool = field(default=False)
+    bool_unused_3:           bool = field(default=False)
+    link_lim_vals:           int  = field(default=0)
+    link_lim_tags:           int  = field(default=0)
+    v_chk_date:              str  = field(default=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
+    def __post_init__(self):
+        pass
+
+    def vault_unpack(self, vlt_name: str, src_vault: dict, dst_vault: dict) -> dict:
+        dst_vault[vlt_name] = {
+              'vault_name':         src_vault['vault_name']
+            , 'vault_id':           src_vault['vault_id']
+            , 'dir_vault':          src_vault['dir_vault']
+            , 'active':             src_vault['active']
+            , 'dir_templates':      src_vault['dir_templates']
+            , 'skip_rel_str':  src_vault['skip_rel_str']
+            , 'skip_abs_lst':  src_vault['skip_abs_lst']
+            , 'dirs_dot':           src_vault['dirs_dot']
+            , 'ctot':               src_vault['ctot']
+            , 'bool_shw_notes':     src_vault['bool_shw_notes']
+            , 'bool_rel_paths':     src_vault['bool_rel_paths']
+            , 'bool_summ_rows':     src_vault['bool_summ_rows']
+            , 'bool_unused_1':      src_vault['bool_unused_1']
+            , 'bool_unused_2':      src_vault['bool_unused_2']
+            , 'bool_unused_3':      src_vault['bool_unused_3']
+            , 'link_lim_vals':      src_vault['link_lim_vals']
+            , 'link_lim_tags':      src_vault['link_lim_tags']
+            , 'v_chk_date':         src_vault['v_chk_date']
+        }
+
+        return dst_vault
 
 def main() -> None:
     pass

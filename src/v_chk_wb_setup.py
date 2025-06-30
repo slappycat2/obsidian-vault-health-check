@@ -7,14 +7,14 @@ from src.v_chk_class_lib import Colors
 class WbDataDef:
     def __init__(self, dbug_lvl=0):
         self.DBUG_LVL = dbug_lvl
-        self.syscfg = SysConfig()
-        self.cfg = self.syscfg.cfg
+        self.syscfg_obj = SysConfig()
+        self.sys_cfg = self.syscfg_obj.sys_cfg
 
-        self.pn_cfg     = self.cfg['pn_cfg']
+        self.sys_pn_cfg     = self.sys_cfg['sys_pn_cfg']
 
-        self.sys_id         = self.cfg.get(['sys_id'],'v_chk')
-        self.sys_dir_batch  = self.cfg['sys_dir_batch']
-        self.sys_dir_wbs    = self.cfg['sys_dir_wbs']
+        self.sys_id         = self.sys_cfg.get('sys_id','v_chk')
+        self.sys_dir_batch  = self.sys_cfg['sys_dir_batch']
+        self.sys_dir_wbs    = self.sys_cfg['sys_dir_wbs']
         self.wb_tabs        = {}
         self.wb_data        = {}
 
@@ -60,7 +60,7 @@ class WbDataDef:
             , 'NonD': ['YAML formatting error'  , 'Invalid Frontmatter--Not in dictionary format']
         }
         self.wb_def = {
-              'cfg': self.cfg
+              'sys_cfg': self.sys_cfg
             , 'wb_tabs': self.wb_tabs
             , 'wb_data': self.wb_data
         }
@@ -69,7 +69,7 @@ class WbDataDef:
 
     def wb_def_pack(self):
         self.wb_def = {
-              'cfg': self.cfg
+              'sys_cfg': self.sys_cfg
             , 'wb_tabs': self.wb_tabs
             , 'wb_data': self.wb_data
         }
@@ -98,8 +98,8 @@ class WbDataDef:
         self.sys_pn_wbs = f"{self.sys_dir_wbs}/{Path(latest_file).stem}.xlsx"
         if self.DBUG_LVL > 1:
             print(f"ConfigData: Read Last Config file: {self.sys_pn_batch}")
-        self.cfg['sys_pn_batch'] = self.sys_pn_batch
-        self.cfg['sys_pn_wbs'] = self.sys_pn_wbs
+        self.sys_cfg['sys_pn_batch'] = self.sys_pn_batch
+        self.sys_cfg['sys_pn_wbs'] = self.sys_pn_wbs
 
         return
 
@@ -120,8 +120,8 @@ class WbDataDef:
 
         self.sys_pn_batch = c_file
         self.sys_pn_wbs = f"{self.sys_dir_wbs}{Path(c_file).stem}.xlsx"
-        self.cfg['sys_pn_batch'] = self.sys_pn_batch
-        self.cfg['sys_pn_wbs'] = self.sys_pn_wbs
+        self.sys_cfg['sys_pn_batch'] = self.sys_pn_batch
+        self.sys_cfg['sys_pn_wbs'] = self.sys_pn_wbs
 
         if self.DBUG_LVL > 1:
             print(f"ConfigData: Init Next Config file: {self.sys_pn_batch}")
@@ -164,7 +164,7 @@ class WbDataDef:
             , 'obs_files': self.obs_files
         }
         self.wb_def = {
-              'cfg': self.cfg
+              'sys_cfg': self.sys_cfg
             , 'wb_tabs': self.wb_tabs
             , 'wb_data': self.wb_data
         }
@@ -192,7 +192,7 @@ class WbDataDef:
             sys.exit(1)
 
 
-    def read_bat_data(self):
+    def read_wb_data(self):
         if self.sys_pn_batch == '' or self.sys_pn_batch is None:
             self.get_last_bat()
             if self.DBUG_LVL > 1:
@@ -228,7 +228,7 @@ if __name__ == "__main__":
     if DBUG_LVL:
         lin = "=" * 30
         dict_list = {
-              'cfg': bat.wb_def['cfg']
+              'sys_cfg': bat.wb_def['sys_cfg']
             , 'wb_tabs': bat.wb_def['wb_tabs']
             , 'wb_data': bat.wb_def['wb_data']
             # , 'tab_def': bat.wb_def['wb_tabs']['pros']

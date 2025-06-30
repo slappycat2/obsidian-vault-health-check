@@ -8,11 +8,11 @@ class NewWb(WbDataDef):
         self.DBUG_LVL = dbug_lvl
         self.tab_id = 'init'
         super().__init__(self.DBUG_LVL)
-        self.wb_def = self.read_bat_data()
+        self.wb_def = self.read_wb_data()
         self.wb_tabs = self.wb_def['wb_tabs']
         self.tab_def = {}
-        self.cfg = self.wb_def['cfg']
-        self.ctot = self.cfg['ctot']
+        self.sys_cfg = self.wb_def['sys_cfg']
+        self.ctot = self.sys_cfg['ctot']
         self.Colors = Colors()
 
         if self.DBUG_LVL > 0:
@@ -382,7 +382,7 @@ class NewWb(WbDataDef):
 class NewTab:
     def __init__(self, tab_id, wb_obj):
         self.tab_id = tab_id
-        self.cfg = wb_obj.cfg
+        self.sys_cfg = wb_obj.sys_cfg
         # self.tab_common = tab_common
 
         self.tab_name       = wb_obj.tab_common[tab_id]['tab_name']
@@ -398,12 +398,12 @@ class NewTab:
         self.showGridLines  = wb_obj.tab_common[tab_id]['shw_grid']
         self.xyml_descs     = wb_obj.xyml_descs
 
-        ctot = self.cfg.get('ctot', [0] * 13)
+        ctot = self.sys_cfg.get('ctot', [0] * 13)
 
         self.link_max_vals   = ctot[11]
         self.link_max_tags   = ctot[12]
-        self.link_lim_vals = self.cfg.get('link_lim_vals', 0)
-        self.link_lim_tags = self.cfg.get('link_lim_tags', 0)
+        self.link_lim_vals = self.sys_cfg.get('link_lim_vals', 0)
+        self.link_lim_tags = self.sys_cfg.get('link_lim_tags', 0)
 
         # Fill and text colors for grid tab headings
         self.colors = wb_obj.Colors
@@ -1481,9 +1481,9 @@ class DefSumm(NewTab):
         self.tab_common = wb_obj.tab_common
         wb_def = wb_obj.wb_def
         super().__init__(self.tab_id, wb_obj)
-        ctot = self.cfg['ctot']
-        dir_vault_txt = f"Vault Path: {self.cfg['dir_vault']}"
-        v_chk_date = self.cfg['v_chk_date']
+        ctot = self.sys_cfg['ctot']
+        dir_vault_txt = f"Vault Path: {self.sys_cfg['dir_vault']}"
+        v_chk_date = self.sys_cfg['v_chk_date']
         comm = wb_obj.tab_common
 
         clr1, txt1, clr2, txt2, table_style = self.colors.get_tab_clrs(self.tab_id)
@@ -1645,7 +1645,7 @@ class DefAr51(NewTab):
         self.colors = wb_obj.Colors
       # self.tab_common = wb_obj.tab_common
         super().__init__(self.tab_id, wb_obj)
-        cfg  = wb_obj.cfg
+        sys_cfg  = wb_obj.sys_cfg
         ctot = wb_obj.ctot
         tab_common = wb_obj.tab_common
         sea2 = self.colors.tbl_clrs['sea'][2]
@@ -1676,7 +1676,7 @@ class DefAr51(NewTab):
         ctot_descs = [
                   '00-Total MD Files in Vault'
                 , '01-Templates Processed'
-                , '02-MD Files in dirs_skip_rel_str'
+                , '02-MD Files in skip_rel_str'
                 , '03-Files Processed/Dups Teste'
                 , '04-Known Nested Tags Files Found'
                 , '05-Frontmatter YAML Files'
@@ -1808,7 +1808,7 @@ if __name__ == '__main__':
     if DBUG_LVL:
         lin = "=" * 30
         dict_list = {
-              'cfg': tabs.wb_def['cfg']
+              'sys_cfg': tabs.wb_def['sys_cfg']
             , 'wb_tabs': tabs.wb_def['wb_tabs']
             , 'wb_data': tabs.wb_def['wb_data']
             # , 'tab_def': tabs.wb_def['wb_tabs']['pros']

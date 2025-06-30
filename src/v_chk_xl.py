@@ -17,7 +17,7 @@ from openpyxl.drawing.image import Image
 from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
 
 from src.v_chk_wb_setup import WbDataDef
-from src.v_chk_class_lib import PluginMan, Colors, ObsidianApp
+from src.v_chk_class_lib import PluginMan, Colors
 # WIP
 # Todo: Bug-019 - File Count in Properties is really, meaningless. it's files * values
 #                 Look for more like this!
@@ -54,7 +54,7 @@ from src.v_chk_class_lib import PluginMan, Colors, ObsidianApp
 # Todo: ER-012 - Include a Flag to Display Relative Path or just NoteName in all Hyperlinks
 # Todo: ER-013 - Identify Singular and Plural usages of properties and tags
 # Todo: ER-014 - Fix Area51 Table Dump
-# Todo: ER-015 - Rename dirs_skip_rel_str to dirs_skip_abs_lst_user
+# Todo: ER-015 - Rename skip_rel_str to skip_abs_lst_user
 # Todo: ER-016 - Files needs Date Modified and Date Created columns
 # Todo: ER-017 - v_chk: routines--to isolate properties and tags in a vault--need to be made into stand alone classes. \
 #                This would allow for a built-in Search and Replace function at a later date.
@@ -148,18 +148,17 @@ class ExcelExporter:
         cfg_setup = WbDataDef(self.DBUG_LVL)
         self.xyml_descs = cfg_setup.xyml_descs
 
-        self.wb_def = cfg_setup.read_bat_data()
-        self.cfg = self.wb_def.get('cfg', {})
+        self.wb_def = cfg_setup.read_wb_data()
+        self.sys_cfg = self.wb_def.get('sys_cfg', {})
 
-        self.sys_tab_seq = self.cfg['sys_tab_seq']   # ['summ', 'pros', 'tags', 'dups', 'xyml']  # ['summ', 'pros', 'tags', 'dups']
-        self.dir_vault = self.cfg['dir_vault']
-        self.vault_id = self.cfg['vault_id']
-        self.sys_pn_wbs = self.cfg['sys_pn_wbs']
+        self.sys_tab_seq = self.sys_cfg['sys_tab_seq']   # ['summ', 'pros', 'tags', 'dups', 'xyml']  # ['summ', 'pros', 'tags', 'dups']
+        self.dir_vault = self.sys_cfg['dir_vault']
+        self.vault_id = self.sys_cfg['vault_id']
+        self.sys_pn_wbs = self.sys_cfg['sys_pn_wbs']
         if self.DBUG_LVL >= 0:
             print(f"Building workbook {self.sys_pn_wbs}...")
-        self.sys_pn_batch = self.cfg['sys_pn_cfg']
-        self.sys_bat_num = self.cfg['sys_bat_num']
-        self.sys_pn_wb_exec = self.cfg['sys_pn_wb_exec']
+        self.sys_pn_batch = self.sys_cfg['sys_pn_batch']
+        self.sys_pn_wb_exec = self.sys_cfg['sys_pn_wb_exec']
 
         self.wb_data = self.wb_def.get('wb_data', {})
         self.obs_props = self.wb_data.get('obs_props', {})
@@ -173,6 +172,7 @@ class ExcelExporter:
         self.obs_nests = self.wb_data.get('obs_plugs', {})
 
         self.rgx_boundary = re.compile('^---\\s*$', re.MULTILINE)
+        # noinspection RegExpRedundantEscape,RegExpSimplifiable
         self.rgx_body = re.compile('(^|(\\[))([)([A-Za-z0-9_]+)[:]{2}(.*?)(\\]?\\]?)($|\\])')
         self.rgx_tag_pattern = re.compile('#(\w+)')
         self.rgx_noTZdatePattern = r"([0-9]{4})[-\/]([0-1]?[0-9]{1})[-\/]([0-3])?([0-9]{1})(\s+)([0-9]{2}:[0-9]{2}:[0-9]{2})(.*)"
@@ -207,25 +207,27 @@ class ExcelExporter:
             # self.tab_def = self.wb_tabs_open[tab_id]
             self.tabs_built[tab_id] = self.tab_def
             if tab_id != 'ar51':
-                self.wb_tabs_done[tab_id] = self.export_tab(wb)
-
-        self.export_area51(self, wb)
+                self.wb_tabs_done[tab_id] = self.export_tab()
+            
+        self.export_area51()
 
         if self.DBUG_LVL >= 0:
             print(f"Building workbook completed successfully.")
 
         self.save_workbook(wb)
 
-    def export_area51(self, wb_obj, wb):
+    def export_area51(self) -> None:
         tab_id = 'ar51'
         tab = self.wb_tabs_open[tab_id]
         err_txt = self.colors.err_txt
+        area51_img = '../img/Area51.png'
 
-        tab_def = wb_obj.wb_def['wb_tabs'][tab_id]
+        tab_def = self.wb_def['wb_tabs'][tab_id]
 
-        img = Image('../img/Area51.png')
-        # add to worksheet and anchor next to cells
-        tab.add_image(img, 'A1')
+        if os.path.exists(area51_img):
+            img = Image(area51_img)
+            # add to worksheet and anchor next to cells
+            tab.add_image(img, 'A1')
 
         # ========================================================================
         # export Totals Grid, both headers and formulas for totals
@@ -244,7 +246,7 @@ class ExcelExporter:
             #   col, row, sz, t_clr, fill_clr, Bold, Italic, Align, Value          len=9
             #   col, w, t_clr, fill_clr, Bold, Align                               len=6
             row_idx = 0
-            row_idx, cell = self.export_cell(tab, tot_col_def_list, val, row_idx)
+            _, _ = self.export_cell(tab, tot_col_def_list, val, row_idx)
 
         # ========================================================================
         # export cfg
@@ -254,7 +256,7 @@ class ExcelExporter:
         row_idx = cfg_cd_def[1]
         col_sav = col_idx
 
-        for key, value in self.cfg.items():
+        for key, value in self.sys_cfg.items():
             if isinstance(value, (list, tuple)):
                 val = ', '.join([str(item) for item in value])
                 val = f"[{val}]"
@@ -280,7 +282,7 @@ class ExcelExporter:
         tab.conditional_formatting.add('E21:E28', CellIsRule(
             operator='notEqual', formula=['0'], stopIfTrue=False, font=Font(color=err_txt, bold=True, italic=True)))
 
-    def export_tab(self, wb):
+    def export_tab(self):
         tab_id = self.tab_def['tab_id']
         tab_def = self.tab_def
         tab = self.wb_tabs_open[tab_id]
@@ -288,7 +290,6 @@ class ExcelExporter:
         tab_table_style = tab_def['tab_table_style']
         tbl_hdr_row = tab_def['tbl_hdr_row']
         tbl_beg_col = tab_def['tbl_beg_col']
-        tbl_end_col = tab_def['tbl_end_col']
         tab_table_links_cols = tab_def['tab_table_links_cols']
         tab_tots_isVisible_col = tab_def['tab_tots_isVisible_col']
         tbl_name = tab_def['tbl_name']
@@ -324,8 +325,6 @@ class ExcelExporter:
                     _, cell = self.export_cell(tab, texts_def, text_line, row_idx)
 
         # TABLE-Hdr export the main body table - column headers
-        col_idx = tbl_beg_col
-        row_idx = tbl_hdr_row
         for hdr_key, hdr_col_def_list in tab_cd_table_hdr.items():
             # unpack header definitions
             col_idx, cell = self.export_cell(tab, hdr_col_def_list, '', tbl_hdr_row)
@@ -572,7 +571,7 @@ class ExcelExporter:
         #     print(f"last_row: {last_row} <> row_idx - tbl_hdr_row: {row_idx - tbl_hdr_row}")
         #     _ = input(f"Press  Return to continue...")
         if self.tab_def['tbl_beg_col']:
-            ret = self.format_as_table(tab, tbl_name, tab_table_style, row_idx)
+            self.format_as_table(tab, tbl_name, tab_table_style, row_idx)
 
         last_row = row_idx
         # ===========================================================================================
@@ -847,8 +846,6 @@ class ExcelExporter:
         tbl.tableStyleInfo = tbl_style
         tab.add_table(tbl)
 
-        return tab
-
     def xl_clean_cell(self, cell_value):
         """
         Replace illegal XML characters in the given cell value with '@'
@@ -966,12 +963,12 @@ if __name__ == "__main__":
     DBUG_LVL = 1
 
     # cfg_setup = SysConfig()
-    # cfg = cfg_setup.cfg
+    # cfg = cfg_setup.sys_cfg
     exporter = ExcelExporter(DBUG_LVL)
     exporter.export(DBUG_LVL)
     # wb = WbDataDef(DBUG_LVL)
-    # wbdef = cfg.read_cfg_data()
-    # cfg = wbdef['cfg']
+    # wbdef = cfg.read_wb_data()
+    # cfg = wbdef['sys_cfg']
     # sys_pn_wbs = cfg['sys_pn_wbs']
     # sys_pn_wb_exec = cfg['sys_pn_wb_exec']
 
