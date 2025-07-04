@@ -1,9 +1,9 @@
 import sys
 import os
 import time
-import urllib.parse
 import copy
 import re
+import urllib.parse
 
 from datetime import datetime
 from pathlib import Path
@@ -18,6 +18,9 @@ from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
 
 from src.v_chk_wb_setup import WbDataDef
 from src.v_chk_class_lib import PluginMan, Colors
+
+from src.v_chk import logger
+
 # WIP
 # Todo: Bug-019 - File Count in Properties is really, meaningless. it's files * values
 #                 Look for more like this!
@@ -118,10 +121,8 @@ from src.v_chk_class_lib import PluginMan, Colors
 # Need to restructure this. Should this be a "library", or maybe part of a WB_CLASS?
 
 class ExcelExporter:
-    def __init__(self, dbug_lvl):
-        self.DBUG_LVL = dbug_lvl
+    def __init__(self):
         self.tab_def = {}
-        self.dbug = False
         self.wb_tabs_open = {}
         self.v_chk_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.TAG_TOT_COLS = 20  # Set this to the maximum columns to be added to table (w/o the step)
@@ -134,18 +135,11 @@ class ExcelExporter:
         self.next_cell_col = 0
         self.last_cell_row = 0
         self.colors = Colors()
-        self.DBUG_TAB = 'summ'  # DBUG_LVL must be greater than 2
-        # self.DBUG_LVL = 0  # Do Not print anything
-        # self.DBUG_LVL = 1  # print report level actions only (export, load, save, etc.) + all lower levels
-        # self.DBUG_LVL = 3  # print export_tab + all lower levels
-        # self.DBUG_LVL = 4  # print hdr records + all lower levels
-        # self.DBUG_LVL = 5  # print detail records + all lower levels
-        # self.DBUG_LVL = 9  # print everything (includes export_cell!)
 
         self.tab_id_sub_key = ''
         self.tabs_built = {}
         self.wb_tabs_done = {}
-        cfg_setup = WbDataDef(self.DBUG_LVL)
+        cfg_setup = WbDataDef()
         self.xyml_descs = cfg_setup.xyml_descs
 
         self.wb_def = cfg_setup.read_wb_data()
@@ -155,8 +149,7 @@ class ExcelExporter:
         self.dir_vault = self.sys_cfg['dir_vault']
         self.vault_id = self.sys_cfg['vault_id']
         self.sys_pn_wbs = self.sys_cfg['sys_pn_wbs']
-        if self.DBUG_LVL >= 0:
-            print(f"Building workbook {self.sys_pn_wbs}...")
+        logger.debug(f"Building workbook {self.sys_pn_wbs}...")
         self.sys_pn_batch = self.sys_cfg['sys_pn_batch']
         self.sys_pn_wb_exec = self.sys_cfg['sys_pn_wb_exec']
 
@@ -183,16 +176,14 @@ class ExcelExporter:
         # self.code_q_types = ['TABLE', 'LIST', 'TASK', 'CALENDAR']
         self.plugin_lib = PluginMan(self.dir_vault)
 
-        if self.DBUG_LVL > 8:
-            print(f"ExcelExport - cfg.sys_pn_wb_exec: {self.sys_pn_wb_exec}")
+        logger.debug(f"ExcelExport - cfg.sys_pn_wb_exec: {self.sys_pn_wb_exec}")
 
         self.exl_file = Path(self.sys_pn_wb_exec)
 
-    def export(self, dbug_lvl):
+    def export(self):
     # =================================================================================
-        self.DBUG_LVL = dbug_lvl
-        if self.DBUG_LVL > 1:
-            print(f"ExcelExport.export - sys_pn_wb_exec: {self.sys_pn_wb_exec}")
+
+        logger.debug(f"ExcelExport.export - sys_pn_wb_exec: {self.sys_pn_wb_exec}")
 
         # Create the workbook instance
         wb = openpyxl.Workbook()
@@ -200,8 +191,7 @@ class ExcelExporter:
         wb = self.initialize_all_tabs(wb)
 
         for tab_id in self.sys_tab_seq:
-            if self.DBUG_LVL > 3:
-                print(f"Exporting tab: {tab_id}")
+            logger.debug(f"Exporting tab: {tab_id}")
 
             self.tab_def = self.wb_def['wb_tabs'][tab_id]
             # self.tab_def = self.wb_tabs_open[tab_id]
@@ -211,8 +201,7 @@ class ExcelExporter:
             
         self.export_area51()
 
-        if self.DBUG_LVL >= 0:
-            print(f"Building workbook completed successfully.")
+        logger.debug(f"Building workbook completed successfully.")
 
         self.save_workbook(wb)
 
@@ -237,8 +226,7 @@ class ExcelExporter:
         tot_table = tab_def['tab_cd_fixed_grid']
 
         for tot_key, tot_col_def_list in tot_table.items():
-            if self.DBUG_LVL > 3: # and self.DBUG_TAB == self.tab_def['tab_id']:
-                print(f"Grid-Tab: '{tab_id} Val:{tot_key}' {tot_col_def_list}")
+            logger.debug(f"Grid-Tab: '{tab_id} Val:{tot_key}' {tot_col_def_list}")
                 # ,{row_idx} val:{val}  def_val: {def_val}")  # Set a breakpount on this line
 
             # def export_cell(self, tab, col_def_list, val, row_idx):
@@ -299,8 +287,7 @@ class ExcelExporter:
         showGridLines    = self.tab_def['showGridLines']
         data_src           = tab_def['data_src']
 
-        if self.DBUG_LVL > 2 and self.DBUG_TAB == self.tab_def['tab_id']:
-            print(f"Exporting Tab: {tab_id}") #  Set a breakpount on this line
+        logger.debug(f"Exporting Tab: {tab_id}") #  Set a breakpount on this line
 
         # Create the tab, or rename Sheet 1, in the Summaries case...
         # if tab_id == 'summ':
@@ -328,9 +315,8 @@ class ExcelExporter:
         for hdr_key, hdr_col_def_list in tab_cd_table_hdr.items():
             # unpack header definitions
             col_idx, cell = self.export_cell(tab, hdr_col_def_list, '', tbl_hdr_row)
-            if self.DBUG_LVL > 8:
-                print(f"Processing [Header]:{hdr_key}")
-                print(f" {tab_id}  row:{tbl_hdr_row}  col: {col_idx}  list: {hdr_col_def_list}")
+            logger.debug(f"Processing [Header]:{hdr_key}")
+            logger.debug(f" {tab_id}  row:{tbl_hdr_row}  col: {col_idx}  list: {hdr_col_def_list}")
 
         if tbl_beg_col != 0:
             tab[f"{self.xl_a_col(tbl_beg_col + 1)}{tbl_hdr_row + 1}"] = "Nothing Found."
@@ -510,8 +496,7 @@ class ExcelExporter:
                     vals = vals + [obs_link, " "]
 
                 # TABLE-Dtl Finally, now we have all the col values in vals, so we can add this row...
-                if self.DBUG_LVL > 4:
-                    print(f"Processing [Property]:{prop_name} - [Value]:{value_item} - [Count]: {value_item_count}")
+                logger.debug(f"Processing [Property]:{prop_name} - [Value]:{value_item} - [Count]: {value_item_count}")
 
                 if tab_id == "pros" and prop_name == last_prop_name:
                     continue
@@ -530,9 +515,8 @@ class ExcelExporter:
 
                     val = vals[col_idx - tbl_beg_col]
 
-                    if self.DBUG_LVL > 8:
-                        print(f"Col: {col_idx}-{dummy_key}\t\t  "
-                              f"Val {col_idx - tbl_beg_col}: {vals[col_idx - tbl_beg_col]}")
+                    logger.debug(f"Col: {col_idx}-{dummy_key}")
+                    logger.debug(f"Val {col_idx - tbl_beg_col}: {vals[col_idx - tbl_beg_col]}")
 
                     if col_idx == tab_tots_isVisible_col:
                         val = tab_def['f_isVisible']
@@ -618,8 +602,7 @@ class ExcelExporter:
                 tab.add_image(a_img, a_cell)
                 continue
 
-            if self.DBUG_LVL > 3:  # and self.DBUG_TAB == self.tab_def['tab_id']:
-                print(f"Grid-Tab: '{tab_id} Val:{tot_key}' {tot_col_def_list}")
+            logger.debug(f"Grid-Tab: '{tab_id} Val:{tot_key}' {tot_col_def_list}")
                 # ,{row_idx} val:{val}  def_val: {def_val}")  # Set a breakpount on this line
 
             _, cell = self.export_cell(tab, tot_col_def_list, val, row_idx)
@@ -631,8 +614,7 @@ class ExcelExporter:
         # ========================================================================
         tot_table = tab_def['tab_cd_fixed_summ']
         for tot_key, tot_col_def_list in tot_table.items():
-            if self.DBUG_LVL > 3:  # and self.DBUG_TAB == self.tab_def['tab_id']:
-                print(f"Grid-summ-Tab: '{tab_id} Val:{tot_key}' {tot_col_def_list}")
+            logger.debug(f"Grid-summ-Tab: '{tab_id} Val:{tot_key}' {tot_col_def_list}")
                 # ,{row_idx} val:{val}  def_val: {def_val}")  # Set a breakpount on this line
 
             _, cell = self.export_cell(tab, tot_col_def_list, val, row_idx)
@@ -655,11 +637,9 @@ class ExcelExporter:
         # col,row,font,sz, w,t_clr,f_clr,Bold,Ital,  Align,  val ] = 11
         col_idx, def_row, c_font, c_sz, col_w, txt_clr, fill_clr, bold_bool, ital_bool, align_val, def_val = col_def_list
 
-        if self.DBUG_LVL > 8 and self.DBUG_TAB == self.tab_def['tab_id']:
-            print(f"Exporting Cell (Col,Row): {col_def_list[0]},{row_idx} val:{val}  def_val: {def_val}") #  Set a breakpount on this line
+        logger.debug(f"Exporting Cell (Col,Row): {col_def_list[0]},{row_idx} val:{val}  def_val: {def_val}") #  Set a breakpount on this line
 
-        if self.DBUG_LVL > 8 and self.DBUG_TAB == self.tab_def['tab_id']:
-            print(f"Exporting Cell (Col,Row): {col_def_list[0]},{row_idx} val:{val}  def_val: {def_val}") #  Set a breakpount on this line
+        logger.debug(f"Exporting Cell (Col,Row): {col_def_list[0]},{row_idx} val:{val}  def_val: {def_val}") #  Set a breakpount on this line
 
         if val is None or val == "":
             val = def_val
@@ -707,8 +687,7 @@ class ExcelExporter:
             cell.alignment = Alignment(wrap_text=True, vertical="top", horizontal="left")
         else:
             cell.alignment = Alignment(horizontal=align_val, vertical="center")
-        if self.DBUG_LVL > 8 and row_idx < 13:
-            print(f"Set Cell: at {row_idx}:{col_idx} to:{val}")
+        logger.debug(f"Set Cell: at {row_idx}:{col_idx} to:{val}")
 
         if txt_clr != "" and txt_clr is not None:
             cell.font = Font(name=c_font, size=c_sz, color=txt_clr, bold=bold_bool, italic=ital_bool)
@@ -744,8 +723,6 @@ class ExcelExporter:
             tab_name = tab_def['tab_name']
             tab_color = tab_def['tab_color']
             showGridLines = tab_def['showGridLines']
-            # if self.DBUG_LVL > 1 and self.DBUG_TAB == self.tab_def[tab_id]:
-            #     print(f"Initializing Tab: {tab_id}")  # Set a breakpount on this line
 
             # Create the tab, or rename Sheet 1, in the Summaries case...
             if tab_id == 'summ':
@@ -766,8 +743,7 @@ class ExcelExporter:
         return wb
 
     def save_workbook(self, wb):
-        if self.DBUG_LVL >= 0:
-            print(f"Saving Spreadsheet: {self.sys_pn_wbs}")
+        logger.debug(f"Saving Spreadsheet: {self.sys_pn_wbs}")
 
         # save and load workbook
         if os.path.isfile(self.sys_pn_wbs):
@@ -837,8 +813,7 @@ class ExcelExporter:
         else:
             tbl_rng = tbl_rng + str(tot_rows - 1)
 
-        if self.DBUG_LVL > 5:
-            print(f"tbl_name: {tbl_nm}  tbl_rng: {tbl_rng}")
+        logger.debug(f"tbl_name: {tbl_nm}  tbl_rng: {tbl_rng}")
 
         tbl = Table(displayName=tbl_nm, ref=tbl_rng)
         tbl_style = TableStyleInfo(name=tab_tbl_style, showFirstColumn=False,
@@ -959,30 +934,11 @@ class ExcelExporter:
                 for cell in row:
                     cell.border = Border(top=border, bottom=border)
 
-if __name__ == "__main__":
-    DBUG_LVL = 1
+def main() -> None:
+    exporter = ExcelExporter()
+    exporter.export()
 
-    # cfg_setup = SysConfig()
-    # cfg = cfg_setup.sys_cfg
-    exporter = ExcelExporter(DBUG_LVL)
-    exporter.export(DBUG_LVL)
-    # wb = WbDataDef(DBUG_LVL)
-    # wbdef = cfg.read_wb_data()
-    # cfg = wbdef['sys_cfg']
-    # sys_pn_wbs = cfg['sys_pn_wbs']
-    # sys_pn_wb_exec = cfg['sys_pn_wb_exec']
+if __name__ == '__main__':
+    main()
 
-    # wb_cfg = Wb_Cfg()
 
-    # if cfg:
-    #     print(f"v_chk_xl: Using last saved config: {sys_pn_wbs}")
-    #     exporter = ExcelExporter(DBUG_LVL)
-    #     exporter.export(DBUG_LVL)
-#
-    #     print(f"v_chk_xl:Loading Spreadsheet: {sys_pn_wb_exec} - {sys_pn_wbs}")
-    #     time.sleep(5)
-#
-    #     # pid = Popen([sys_pn_wb_exec, sys_pn_wbs]).pid
-    # else:
-    #     print(f"v_chk_xl: Error reading config in main: {sys_pn_wbs}")
-    #     print(f"v_chk_xl: Exiting...")

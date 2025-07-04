@@ -7,6 +7,8 @@ import copy
 from pathlib import Path
 import json
 
+from src.v_chk import logger
+
 # from src.v_chk_setup import SysConfig
 
 class JsonFile:
@@ -280,7 +282,6 @@ class Colors:
 class PluginMan:
     def __init__(self, v_path=None):
         self.v_path = v_path
-        self.DBUG_LVL = 0
         self.id                 = ''
         self.name               = ''
         self.version            = ''
@@ -395,8 +396,7 @@ class PluginMan:
                     else:
                         mj_data['enabled'] = False
 
-                    if self.DBUG_LVL > 98:
-                        print(f"Created obj: {mj_data['id']: <30} {mj_data['name']}")
+                    logger.debug(f"Created obj: {mj_data['id']: <30} {mj_data['name']}")
                         # print(f"{t}dir: {plugin_dir}  id:{mj_data['id']}  name:{mj_data['name']}")
                     self.plugs_lib[mj_data['id']] = mj_data
 

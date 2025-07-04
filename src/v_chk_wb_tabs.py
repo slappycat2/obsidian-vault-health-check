@@ -1,13 +1,16 @@
-from openpyxl.styles import Side
 import copy
+
+from openpyxl.styles import Side
+
+from src.v_chk import logger
 from src.v_chk_wb_setup import WbDataDef
 from src.v_chk_class_lib import Colors
 
+
 class NewWb(WbDataDef):
-    def __init__(self, dbug_lvl):
-        self.DBUG_LVL = dbug_lvl
+    def __init__(self):
         self.tab_id = 'init'
-        super().__init__(self.DBUG_LVL)
+        super().__init__()
         self.wb_def = self.read_wb_data()
         self.wb_tabs = self.wb_def['wb_tabs']
         self.tab_def = {}
@@ -15,8 +18,7 @@ class NewWb(WbDataDef):
         self.ctot = self.sys_cfg['ctot']
         self.Colors = Colors()
 
-        if self.DBUG_LVL > 0:
-            print("Loading Workbook Tab Definitions...")
+        logger.debug("Loading Workbook Tab Definitions...")
 
         # Notes and hlp_txt s/b a max of 80 chars; Comments, no more than 3 lines.
         self.tab_common = {  # tab color,         tab hdr colors
@@ -342,8 +344,7 @@ class NewWb(WbDataDef):
         }
 
         for tab_id_key in self.wb_tabs.keys():
-            if self.DBUG_LVL > 3:
-                print(f"Building '{tab_id_key}' tab definition")
+            logger.debug(f"Building '{tab_id_key}' tab definition")
             self.tab_def = self.wb_tabs[tab_id_key]
             if tab_id_key == 'pros':
                 self.tab_def_obj = DefPros(self)
@@ -1794,33 +1795,8 @@ class DefAr51(NewTab):
 
 
 if __name__ == '__main__':
-    # Build Tabs
-    # cfg = WbDataDef()
-    DBUG_LVL = 1
+    tabs = NewWb()
 
-    tabs = NewWb(DBUG_LVL)
-
-    # shelve_file = shelve.open("v_def.db")
-    # shelve_file['v_def'] = v_def
-    # shelve_file.close()
-
-    # self.tab_def['tab_cd_table_hdr']["RowId"]
-    if DBUG_LVL:
-        lin = "=" * 30
-        dict_list = {
-              'sys_cfg': tabs.wb_def['sys_cfg']
-            , 'wb_tabs': tabs.wb_def['wb_tabs']
-            , 'wb_data': tabs.wb_def['wb_data']
-            # , 'tab_def': tabs.wb_def['wb_tabs']['pros']
-        }
-
-        for p_dict_name, p_dict in dict_list.items():
-            print(f"\n{p_dict_name}: {lin}")
-            for k,v in p_dict.items():
-                k_name = f"{p_dict_name}['{k}']"
-                print(f"{k_name: <20}: {v}")
-
-        print("Standalone run of v_chk_xl_tabs.py completed.")
 
 
 

@@ -2,11 +2,16 @@ import re
 import copy
 import sys
 from time import sleep
+import json
+import atexit
+import logging.config
+import logging.handlers
+import pathlib
 
 import yaml
 from pathlib import Path
 
-from src.v_chk_setup import SysConfig
+from src.v_chk_setup import *
 from src.v_chk_wb_setup import WbDataDef
 from src.v_chk_wb_tabs import NewWb
 from src.v_chk_xl import ExcelExporter
@@ -18,6 +23,7 @@ from PIL import Image, ImageTk
 import time
 import os
 
+
 SPLASH_Test = False
 # SPLASH_BG = '#B01513'  # Summary Tab Red
 # SPLASH_BG = '#6666FF'  # Dark pastel blue
@@ -26,27 +32,27 @@ SPLASH_Test = False
 SPLASH_BG = '#800000'  # Maroon
 LOGO_PATH = os.path.abspath(os.path.join("..", "img", "swenlogoicon.png"))
 
+logger = logging.getLogger(__name__)  # __name__ is a common choice
+
+def setup_logging():
+    config_file = pathlib.Path("logging_configs/2-stderr-json-file.json")
+    with open(config_file) as f_in:
+        config = json.load(f_in)
+
+    logging.config.dictConfig(config)
+    queue_handler = logging.getHandlerByName("queue_handler")
+    if queue_handler is not None:
+        queue_handler.listener.start()
+        atexit.register(queue_handler.listener.stop)
+
 # This s/b WbDataDef and v_chk should just instantiate the system.
 class VaultHealthCheck:   # WbConfig
-    def __init__(self, dbug_lvl):
-        # super().__init__()
-        self.DBUG_LVL = dbug_lvl
+    def __init__(self):
         self.dbug = False
-        # self.dbug = 'Terminal Color Escape Sequences.md'
-        if self.DBUG_LVL >= 0:
-            print(f"Obsidian Vault Health Check v1.0\n\nLoading configuration data...")
-        self.DBUG_AREA51 = True
-        self.DBUG_TAB = 'summ'  # DBUG_LVL must be greater than 2
-        # self.DBUG_LVL = 0  # Do Not print anything
-        # self.DBUG_LVL = 1  # print report level actions only (export, load, save, etc.) + all lower levels
-        # self.DBUG_LVL = 2  # print object level actions + all lower levels
-        # self.DBUG_LVL = 3  # print export_tab + all lower levels
-        # self.DBUG_LVL = 4  # print hdr records + all lower levels
-        # self.DBUG_LVL = 5  # print detail records + all lower levels
-        # self.DBUG_LVL = 9  # print everything (includes export_cell!)
+        # self.dbug = 'FUN - Frequently Used Notes.md'
+
         self.key_stack = []
-        # self.cfg_setup = WbDataDef(DBUG_LVL)
-        self.wb_data_obj = WbDataDef(self.DBUG_LVL)
+        self.wb_data_obj = WbDataDef()
 
         self.wb_data_obj.get_next_bat()     # this initials wb_data
         self.plugin_id_def = self.wb_data_obj.plugin_id_def
@@ -65,17 +71,24 @@ class VaultHealthCheck:   # WbConfig
         self.obs_codes = self.wb_data.get('obs_codes', {})
         self.obs_nests = self.wb_data.get('obs_nests', {})
         self.obs_plugs = self.wb_data.get('obs_plugs', {})
-        self.rgx_boundary = re.compile('^---\\s*$', re.MULTILINE)
+        self.rgx_boundary = r'^---\\s*$'
+        self.rgx_boundary = re.compile(self.rgx_boundary, re.MULTILINE)
+        self.rgx_body_pros = r'(^|(\\[))([)([A-Za-z0-9_]+)[:]{2}(.*?)(\\]?\\]?)($|\\])'
+        self.rgx_body_pros = re.compile(self.rgx_body_pros)
+        self.rgx_tag_pattern = r'[^|\w]#(\w+)'
+        self.rgx_tag_pattern = re.compile(self.rgx_tag_pattern, re.MULTILINE)
         # noinspection RegExpRedundantEscape
-        self.rgx_body_pros = re.compile('(^|(\\[))([)([A-Za-z0-9_]+)[:]{2}(.*?)(\\]?\\]?)($|\\])')
-        self.rgx_tag_pattern = re.compile('[^|\w]#(\w+)', re.MULTILINE)
-        # noinspection RegExpRedundantEscape
-        self.rgx_noTZdatePattern = re.compile(r"([0-9]{4})[-\/]([0-1]?[0-9]{1})[-\/]([0-3])?([0-9]{1})(\s+)([0-9]{2}:[0-9]{2}:[0-9]{2})(.*)", re.MULTILINE)
-        self.rgx_code_blocks = re.compile(r'^`{3}[\s\S]*?^`{3}', re.MULTILINE)
-        self.rgx_code_inline = re.compile(r'`[^`]*`', re.MULTILINE)
+        rgx_noTZ = r"([0-9]{4})[-\/]([0-1]?[0-9]{1})[-\/]([0-3])?([0-9]{1})(\s+)([0-9]{2}:[0-9]{2}:[0-9]{2})(.*)"
+        self.rgx_noTZdatePattern = re.compile(rgx_noTZ, re.MULTILINE)
+        self.rgx_code_blocks = r'^`{3}[\s\S]*?^`{3}'
+        self.rgx_code_blocks = re.compile(self.rgx_code_blocks, re.MULTILINE)
+        self.rgx_code_inline = r'`[^`]*`'
+        self.rgx_code_inline = re.compile(self.rgx_code_inline, re.MULTILINE)
         self.rgx_templater_strs = r"<%[\*]?\s*.*?\s*%>"
+        self.rgx_templater_strs = re.compile(self.rgx_templater_strs, re.MULTILINE)
         # noinspection RegExpRedundantEscape
-        self.rgx_wikilinks = re.compile(r"\[\[.*?\]\]", re.MULTILINE)
+        self.rgx_wikilinks = r"\[\[.*?\]\]"
+        self.rgx_wikilinks = re.compile(self.rgx_wikilinks, re.MULTILINE)
 
         self.filepath = ""
         self.prop_loc_F_I = "F"
@@ -89,8 +102,7 @@ class VaultHealthCheck:   # WbConfig
         self.process_vault()
 
     def process_vault(self):
-        if self.DBUG_LVL >= 0:
-            print(f"Gathering statistics on vault Id: {self.sys_cfg['vault_id']}  Path: {self.sys_cfg['dir_vault']}...")
+        logger.info(f"Gathering statistics on vault Id: {self.sys_cfg['vault_id']}  Path: {self.sys_cfg['dir_vault']}...")
 
         v_path_obj = Path(self.sys_cfg['dir_vault'])
         for md_file in v_path_obj.rglob("*.md"):
@@ -122,11 +134,7 @@ class VaultHealthCheck:   # WbConfig
                 # print(f"Skipping file: {md_file} is in skip_rel_str")
                 continue # this gets the next file...
 
-            if self.DBUG_LVL > 2:
-                print(f"Processing file: {md_file}")
-
-            if 'FUN - Frequently Used Notes' in str(md_file):
-                print(f"Debugging file: {md_file}")
+            logger.debug(f"Processing file: {md_file}")
 
             md_pname = str(md_file)
             self.process_md_file(md_pname)
@@ -150,8 +158,7 @@ class VaultHealthCheck:   # WbConfig
         # Vault processing complete! Get wb tab defs,
         self.wb_data_obj.write_bat_data()
 
-        if self.DBUG_LVL > 0:
-            print(f"Vault ({self.sys_cfg['dir_vault']}) processing complete.")
+        logger.debug(f"Vault ({self.sys_cfg['dir_vault']}) processing complete.")
 
         return
 
@@ -160,11 +167,7 @@ class VaultHealthCheck:   # WbConfig
 
         self.upd_obs_props(self.obs_dupfn, 'dupfn', Path(filepath).name, filepath)
         self.ctot[3] += 1
-        # if self.DBUG_LVL > 2:
-        #     print(f"Processing file: {self.filepath}")
         self.parse_file()
-
-        # self.obs_files[self.filepath] = self.file_pros
 
     def parse_file(self):
         self.plugin_id = ""
@@ -196,36 +199,6 @@ class VaultHealthCheck:   # WbConfig
 
         self.process_code_blocks(full_content)
 
-    def process_code_blocks(self, content):
-        cb_list = self.extract_codeblocks(content)
-        for cb in cb_list:
-            cb_sig = self.extract_codeblock_info(cb)
-            # file_cb_sig = f"{self.filepath}|{cb_sig}"
-            self.upd_obs_props(self.obs_codes, self.filepath, cb_sig, cb)
-
-    def strip_templater_strs(self, markdown_text):
-        clean_text = re.sub(self.rgx_templater_strs, "", markdown_text, flags=re.DOTALL)
-        return clean_text
-
-    def strip_wikilinks(self, markdown_text):
-        clean_text = re.sub(self.rgx_wikilinks, "", markdown_text)
-        return clean_text
-
-    def strip_codeblocks(self, markdown_text):
-        return re.sub(self.rgx_code_blocks, "", markdown_text)
-
-    def strip_inline_code(self, markdown_text):
-        return re.sub(r"`[^`]*`", "", markdown_text)
-
-    def get_tags_list(self, markdown_text):
-        temp_content = copy.deepcopy(markdown_text)
-        temp_content = self.strip_codeblocks(temp_content)
-        temp_content = self.strip_inline_code(temp_content)
-        temp_content = self.strip_templater_strs(temp_content)
-        temp_content = self.strip_wikilinks(temp_content)
-        tag_list = set(self.rgx_tag_pattern.findall(temp_content))
-        return tag_list
-
     def process_body(self, body_text):
         body_text = "".join(body_text)
         # strip code from text
@@ -238,8 +211,7 @@ class VaultHealthCheck:   # WbConfig
         for idx, match in enumerate(match_pros):
             m = match_pros[idx].group()
 
-            if self.DBUG_LVL > 8:
-                print(f"m={m}  len: {len(m.split('::'))}")
+            logger.debug(f"process_body m={m}  len: {len(m.split('::'))}")
 
             k, v = m.split("::")
             k = k.strip()
@@ -273,14 +245,12 @@ class VaultHealthCheck:   # WbConfig
                 return
 
         except yaml.YAMLError as e:
-            if self.DBUG_LVL > 8:
-                print(f"Error in YAML: {e}")
+            logger.debug(f"Error in YAML: {e}")
             self.upd_obs_props(self.obs_xyaml, 'BadY', self.filepath, self.filepath)
             return
 
         except Exception as e:
-            if self.DBUG_LVL >= 0:
-                print(f"Unhandled Exception:\t {self.filepath}\n{e}\n\n")
+            logger.error(f"Unknown YAML (ErrY) Exception logged: {self.filepath} {e}")
                 # e = unhashable type: 'dict'
             self.upd_obs_props(self.obs_xyaml, 'ErrY', self.filepath, self.filepath)
             return
@@ -291,7 +261,8 @@ class VaultHealthCheck:   # WbConfig
             self.upd_obs_props(self.obs_xyaml, 'MtFm', self.filepath, self.filepath)
         return
 
-    # new version here
+        # new version here
+
     def unpack_yaml(self, key_passed, a_yaml_dict):
         # For nested dictionaries, this will run reciprocally
         obs_prop_key = ""
@@ -324,6 +295,7 @@ class VaultHealthCheck:   # WbConfig
             if (isinstance(value, list)
                     and isinstance(value[0], list)
                     and len(value) == 1):
+                print(value)
                 value = f"[[{value[0][0]}]]"
 
             if isinstance(value, dict):
@@ -357,6 +329,9 @@ class VaultHealthCheck:   # WbConfig
     def upd_val(self, k, v):
         if k == "tags" and v is not None:
             v = v.lower()
+
+        if isinstance(v, list) and len(v) == 1 and isinstance(v[0], list):
+            v = self.convert_list_to_str(v)
 
         if self.plugin_id != "":
             # Here, we're passing in a subset of obs_nests, the set for this plugin, only
@@ -408,13 +383,62 @@ class VaultHealthCheck:   # WbConfig
         # we have to get the existing files list, before we can append to it...
         if uval in k_dict:  # fails with [[sbc def]] being made a list [['abc def']] see links in
                             # 'FUN - Frequently Used Notes' in o2_new. This is a valid link, too!
-                            # Stack: 407 367  348  286  187  162  129
             f_list = k_dict[uval]
 
         f_list.append(filepath)
         obs_dict[ukey][uval] = f_list
 
         return
+
+    def process_code_blocks(self, content):
+        cb_list = self.extract_codeblocks(content)
+        for cb in cb_list:
+            cb_sig = self.extract_codeblock_info(cb)
+            # file_cb_sig = f"{self.filepath}|{cb_sig}"
+            self.upd_obs_props(self.obs_codes, self.filepath, cb_sig, cb)
+
+    def strip_templater_strs(self, markdown_text):
+        clean_text = re.sub(self.rgx_templater_strs, "", markdown_text, flags=re.DOTALL)
+        return clean_text
+
+    def strip_wikilinks(self, markdown_text):
+        clean_text = re.sub(self.rgx_wikilinks, "", markdown_text)
+        return clean_text
+
+    def strip_codeblocks(self, markdown_text):
+        return re.sub(self.rgx_code_blocks, "", markdown_text)
+
+    def strip_inline_code(self, markdown_text):
+        return re.sub(r"`[^`]*`", "", markdown_text)
+
+    def get_tags_list(self, markdown_text):
+        temp_content = copy.deepcopy(markdown_text)
+        temp_content = self.strip_codeblocks(temp_content)
+        temp_content = self.strip_inline_code(temp_content)
+        temp_content = self.strip_templater_strs(temp_content)
+        temp_content = self.strip_wikilinks(temp_content)
+        tag_list = set(self.rgx_tag_pattern.findall(temp_content))
+        return tag_list
+
+    def convert_list_to_str(self, wlink):
+        # This is very brute force, but I haven't got  a better way right now
+        wlink = f"{wlink}"  # make sure it's a string this will destroy lists!!!
+        wlink = wlink.replace("{'", "")
+        wlink = wlink.replace("'}", "")
+        wlink = wlink.replace("['", "[")  # remove inner single quotes                        [['test']]
+        wlink = wlink.replace("']", "]")
+        wlink = wlink.replace('["', '[')  # remove inner double quotes                         [["test"]]
+        wlink = wlink.replace('"]', ']')
+        wlink = wlink.replace('"[', '[')  # Cleanup this scenario:                            ["[test]"]"
+        wlink = wlink.replace(']"', ']')  # which will result in:                           [[test]]
+        # At the time of this writing, there are no "lists" of links, but just in case
+        # the linter created one, it would likely be like [[[one link]]] and I don't want that!
+        wlink = wlink.replace("[[[", "[[")  # Just in case, clean up List of links              [[[test]]]
+        wlink = wlink.replace("]]]", "]]")  # which will result in:                           [[test]]
+        # lastly, let's forces quotes around all [[]]
+        wlink = wlink.replace("[[", '"[[')  # remove inner single quotes                        [['test']]
+        wlink = wlink.replace("]]", ']]"')
+        return wlink
 
     def split_file(self, content):
         file_text = "".join(content)
@@ -489,60 +513,6 @@ class VaultHealthCheck:   # WbConfig
 
         return pmax
 
-def debugging_dump():        # v_wb = WbDataDef()
-        # t_wb = NewWb()
-    DBUG_LVL = -1
-        # self.DBUG_LVL = 0  # Do Not print anything
-        # self.DBUG_LVL = 1  # print report level actions only (export, load, save, etc.) + all lower levels
-        # self.DBUG_LVL = 2  # print object level actions + all lower levels
-        # self.DBUG_LVL = 3  # print export_tab + all lower levels
-        # self.DBUG_LVL = 4  # print hdr records + all lower levels
-        # self.DBUG_LVL = 5  # print detail records + all lower levels
-        # self.DBUG_LVL = 9  # print everything (includes export_cell!)
-    vc_def = VaultHealthCheck(DBUG_LVL)
-    tabs = NewWb(DBUG_LVL)
-    exporter = ExcelExporter(DBUG_LVL)
-    exporter.export(DBUG_LVL)
-
-        # print(f"v_chk_xl:Loading Spreadsheet: {sys_pn_wb_exec} - {sys_pn_wbs}")
-        # time.sleep(5)
-        # pid = Popen([sys_pn_wb_exec, sys_pn_wbs]).pid
-
-        # shelve_file = shelve.open("v_def.db")
-        # shelve_file['v_def'] = v_def
-        # shelve_file.close()
-
-    if DBUG_LVL > 90:
-        wbdd_obj = WbDataDef(DBUG_LVL)
-        wb_def  = wbdd_obj.read_wb_data()
-        sys_cfg = wb_def.get('sys_cfg', {})
-        wb_tabs = wb_def.get('wb_tabs', {})
-        wb_data = wb_def.get('wb_data', {})
-
-        lin = "=" * 80
-        print(f"\n{lin}")
-        # self.tab_def['tab_cd_table_hdr']['Row']
-        print(f"Vault Health Check Complete.")
-        print(f"\nConfig Sys File: {sys_cfg['sys_pn_cfg']}")
-        print(f"     Next Data File: {sys_cfg['sys_pn_batch']}")
-        print(f"            Wb File: {sys_cfg['sys_pn_wbs']}")
-
-        # dump wb_def
-        dict_list = {
-              'sys_cfg': sys_cfg
-            , 'wb_tabs': wb_tabs
-            , 'wb_data': wb_data
-           # , 'tab_def': vc_def.wb_tabs['pros']
-        }
-
-        for p_dict_name, p_dict in dict_list.items():
-            print(f"\n{p_dict_name}: {lin}")
-            for k,v in p_dict.items():
-                k_name = f"{p_dict_name}['{k}']"
-                print(f"{k_name: <20}: {v}")
-
-        print(f'\nStandalone run of "{Path(__file__).name}" complete.')
-
 class SplashScreen(tk.Tk):
     def __init__(self, logo_path, title="Obsidian Vault Health Check", version="v1.0"):
         super().__init__()
@@ -593,12 +563,18 @@ class SplashScreen(tk.Tk):
         self.geometry(f"{w}x{h}+{x}+{y}")
 
     def update_status(self, text, progress_value=None):
+        logger.debug(text)
         self.status_var.set(text)
         if progress_value is not None:
             self.progress["value"] = progress_value
         self.update_idletasks()
 
+
 def main():
+    setup_logging()
+    logging.basicConfig(level="INFO")
+    logger.info("Starting Vault Health Check")
+
     # Initialize configuration
     config = SysConfig()
 
@@ -607,15 +583,7 @@ def main():
     splash.after(500, lambda: run_main(splash))
     splash.mainloop()
 
-    # from tkinter.__init__
-    #  # .after() can be called without the "func" argument, but it is basically never what you want.
-    #  # It behaves like time.sleep() and freezes the GUI app.
-    #  def after(self, ms: int | Literal["idle"], func: Callable[[Unpack[_Ts]], object], *args: Unpack[_Ts]) -> str: ...
-    #  # after_idle is essentially partialmethod(after, "idle")
-    #  def after_idle(self, func: Callable[[Unpack[_Ts]], object], *args: Unpack[_Ts]) -> str: ...
-
 def run_main(splash: object) -> None:
-    DBUG_LVL = 0
     phase_txt = [
         "Initializing Vault Health Check...",
         "Gathering Vault Statistics...",
@@ -625,10 +593,7 @@ def run_main(splash: object) -> None:
     ]
     phase_pct = [10, 20, 50, 70, 100]
     splash.update_status(phase_txt[0], phase_pct[0])
-    # vc_def = VaultHealthCheck(DBUG_LVL)
-    # tabs = NewWb(DBUG_LVL)
-    # exporter = ExcelExporter(DBUG_LVL)
-    # exporter.export(DBUG_LVL)
+
     if SPLASH_Test:
         for i in range(5):
             splash.update_status(phase_txt[i], phase_pct[i])
@@ -639,21 +604,17 @@ def run_main(splash: object) -> None:
 
     # try:
     splash.update_status(phase_txt[1], phase_pct[1])
-    DBUG_LVL = 0
-    vc_obj = VaultHealthCheck(DBUG_LVL)
+
+    vc_obj = VaultHealthCheck()
     splash.update_status(phase_txt[2], phase_pct[2])
-    wb_obj = NewWb(DBUG_LVL)
+    wb_obj = NewWb()
     splash.update_status(phase_txt[3], phase_pct[3])
-    exporter = ExcelExporter(DBUG_LVL)
-    exporter.export(DBUG_LVL)
+    exporter = ExcelExporter()
+    exporter.export()
     splash.update_status(phase_txt[4], phase_pct[4])
     time.sleep(1)
-    # except Exception as e:
-    #    splash.update_status(f"Error: {e}")
-    #    time.sleep(20)
-    # finally:
-    splash.destroy()
 
+    splash.destroy()
 
 if __name__ == "__main__":
     main()

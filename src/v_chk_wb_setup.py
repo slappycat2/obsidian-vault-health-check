@@ -1,12 +1,18 @@
 import glob
 import sys
+import os
 
-from src.v_chk_setup import *
-from src.v_chk_class_lib import Colors
+from pathlib import Path
+import yaml
+
+from src.v_chk_setup import SysConfig
+# from src.v_chk_class_lib import Colors
+
+from src.v_chk import logger
+import v_chk_setup
 
 class WbDataDef:
-    def __init__(self, dbug_lvl=0):
-        self.DBUG_LVL = dbug_lvl
+    def __init__(self):
         self.syscfg_obj = SysConfig()
         self.sys_cfg = self.syscfg_obj.sys_cfg
 
@@ -96,8 +102,7 @@ class WbDataDef:
 
         self.sys_pn_batch = latest_file
         self.sys_pn_wbs = f"{self.sys_dir_wbs}/{Path(latest_file).stem}.xlsx"
-        if self.DBUG_LVL > 1:
-            print(f"ConfigData: Read Last Config file: {self.sys_pn_batch}")
+        logger.debug(f"ConfigData: Read Last Config file: {self.sys_pn_batch}")
         self.sys_cfg['sys_pn_batch'] = self.sys_pn_batch
         self.sys_cfg['sys_pn_wbs'] = self.sys_pn_wbs
 
@@ -115,16 +120,14 @@ class WbDataDef:
         while Path(c_file).exists():
             batch_num += 1
             c_file = f"{self.sys_dir_batch}{self.sys_id}_{batch_num:04d}.yaml"
-            if self.DBUG_LVL > 1:
-                print(f"ConfigData: Next Config file: {c_file}")
+            logger.debug(f"ConfigData: Next Config file: {c_file}")
 
         self.sys_pn_batch = c_file
         self.sys_pn_wbs = f"{self.sys_dir_wbs}{Path(c_file).stem}.xlsx"
         self.sys_cfg['sys_pn_batch'] = self.sys_pn_batch
         self.sys_cfg['sys_pn_wbs'] = self.sys_pn_wbs
 
-        if self.DBUG_LVL > 1:
-            print(f"ConfigData: Init Next Config file: {self.sys_pn_batch}")
+        logger.debug(f"ConfigData: Init Next Config file: {self.sys_pn_batch}")
 
         # Init everything except cfg, as this is a new file...
         self.tab_def = {}
@@ -195,11 +198,9 @@ class WbDataDef:
     def read_wb_data(self):
         if self.sys_pn_batch == '' or self.sys_pn_batch is None:
             self.get_last_bat()
-            if self.DBUG_LVL > 1:
-                print(f"ConfigData-read_config: Loaded last config file: {self.sys_pn_batch}")
+            logger.debug(f"ConfigData-read_config: Loaded last config file: {self.sys_pn_batch}")
         else:
-            if self.DBUG_LVL > 1:
-                print(f"ConfigData-read_config: Reading Config file: {self.sys_pn_batch}")
+            logger.debug(f"ConfigData-read_config: Reading Config file: {self.sys_pn_batch}")
         try:
             with open(self.sys_pn_batch, 'r') as file_y:
                 bat_data = file_y.read()
@@ -214,30 +215,7 @@ class WbDataDef:
 
 
 if __name__ == "__main__":
-    DBUG_LVL = 1
     print(f"\nRunning standalone version of {Path(__file__).name}")
 
     # Build Tabs
-    bat = WbDataDef(DBUG_LVL)
-
-    # shelve_file = shelve.open("v_def.db")
-    # shelve_file['v_def'] = v_def
-    # shelve_file.close()
-
-    # self.tab_def['tab_cd_table_hdr']['Row']
-    if DBUG_LVL:
-        lin = "=" * 30
-        dict_list = {
-              'sys_cfg': bat.wb_def['sys_cfg']
-            , 'wb_tabs': bat.wb_def['wb_tabs']
-            , 'wb_data': bat.wb_def['wb_data']
-            # , 'tab_def': bat.wb_def['wb_tabs']['pros']
-        }
-
-        for p_dict_name, p_dict in dict_list.items():
-            print(f"\n{p_dict_name}: {lin}")
-            for k,v in p_dict.items():
-                k_name = f"{p_dict_name}['{k}']"
-                print(f"{k_name: <20}: {v}")
-
-        print(f'\nStandalone run of "v_chk_wb_setup.py" complete.')
+    bat = WbDataDef()

@@ -71,14 +71,14 @@ def run_main(splash):
     try:
         splash.update_status("Processing Vault...", 20)
         DBUG_LVL = -1
-        vc_obj = VaultHealthCheck(DBUG_LVL)
+        vc_obj = VaultHealthCheck()
 
         splash.update_status("Building workbook tab structure...", 70)
-        wb_obj = NewWb(DBUG_LVL)
+        wb_obj = NewWb()
 
         splash.update_status("Exporting workbook...", 90)
-        exporter = ExcelExporter(DBUG_LVL)
-        exporter.export(DBUG_LVL)
+        exporter = ExcelExporter()
+        exporter.export()
 
         splash.update_status("Done. Launching application...", 100)
         time.sleep(1)

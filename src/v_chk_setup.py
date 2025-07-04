@@ -11,6 +11,8 @@ import src.v_chk_class_lib
 from src.v_chk_class_lib import ObsidianApp
 from src.v_chk_setupscreen import SetupScreen
 
+from src.v_chk import logger
+
 @dataclass
 class SysConfig:
     sys_cfg:                 dict = field(default_factory=dict)
